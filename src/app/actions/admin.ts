@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { notifyRegistration, notifyAccepted } from './whatsapp';
+import { notifyRegistration, notifyInterview, notifyFinalAcceptance } from './whatsapp';
 
 export async function getRecruitmentStatus() {
   try {
@@ -115,10 +115,9 @@ export async function getRegistrations() {
   }
 }
 
-export async function updateRegistrationStatus(id: string, phone: string, name: string, division: string, status: 'accepted' | 'rejected') {
+export async function updateRegistrationStatus(id: string, phone: string, name: string, division: string, status: 'interview' | 'accepted' | 'rejected') {
   try {
     const supabase = await createClient();
-    await supabase.from('registrations').update({ status }).eq('id', id);
     
     if (status === 'accepted') {
       // 1. Automatically inject the accepted applicant into the Members Registry permanently
@@ -130,7 +129,18 @@ export async function updateRegistrationStatus(id: string, phone: string, name: 
         photo_url: '' // Will be populated by the Admin later if desired
       });
 
-      // 2. Need to find the Ketua & Wakil profiles for this division to send their numbers via WA
+      // 2. Delete them from the Registration Table 
+      await supabase.from('registrations').delete().eq('id', id);
+
+      // 3. Send final onboarding WA
+      notifyFinalAcceptance(phone, name, division);
+    } else {
+      // Update status to 'interview' or 'rejected'
+      await supabase.from('registrations').update({ status }).eq('id', id);
+    }
+
+    if (status === 'interview') {
+      // Find the Ketua & Wakil profiles for this division to send their numbers via WA
       const { data: leaders } = await supabase.from('profiles')
         .select('role, full_name, phone_number')
         .eq('division', division)
@@ -140,7 +150,7 @@ export async function updateRegistrationStatus(id: string, phone: string, name: 
       const wakil = leaders?.find(l => l.role === 'Wakil Ketua Divisi');
 
       if (ketua) {
-        notifyAccepted(
+        notifyInterview(
           phone, 
           name, 
           division, 

@@ -40,12 +40,17 @@ export async function notifyRegistration(phone: string, name: string, division: 
   await sendWhatsApp(phone, msg);
 }
 
-export async function notifyAccepted(phone: string, name: string, division: string, ketuaNama: string, ketuaPhone: string, wakilNama: string, wakilPhone: string | null) {
+export async function notifyInterview(phone: string, name: string, division: string, ketuaNama: string, ketuaPhone: string, wakilNama: string, wakilPhone: string | null) {
   let contactInfo = `- Ketua Divisi (${ketuaNama}): ${ketuaPhone}`;
   if (wakilNama && wakilPhone) {
     contactInfo += `\n- Wakil Ketua (${wakilNama}): ${wakilPhone}`;
   }
 
-  const msg = `🎉 SELAMAT ${name.toUpperCase()}! 🎉\n\nAnda resmi DITERIMA menjadi anggota LIWA TECH EXCELLENT COMMUNITY di divisi *${division}*.\n\nSilakan segera hubungi pimpinan divisi Anda di bawah ini untuk dimasukkan ke dalam Grup Orientasi:\n${contactInfo}\n\nMari berkarya bersama!`;
+  const msg = `🎉 SELAMAT ${name.toUpperCase()}! 🎉\n\nBerkas pendaftaran Anda dinyatakan LOLOS seleksi awal untuk divisi *${division}*.\n\nAnda berhak melanjutkan ke Tahap Wawancara. Silakan segera hubungi Pimpinan Divisi Anda di bawah ini untuk mengatur jadwal wawancara:\n${contactInfo}\n\nJadilah hebat dan sukses selalu!`;
+  await sendWhatsApp(phone, msg);
+}
+
+export async function notifyFinalAcceptance(phone: string, name: string, division: string) {
+  const msg = `🎉 SELAMAT ${name.toUpperCase()}! 🎉\n\nAnda resmi lulus Wawancara dan SAH menjadi anggota tetap divisi *${division}* di LIWA TECH EXCELLENT COMMUNITY.\n\nSelamat bergabung di keluarga besar kami dan mari berkarya bersama!`;
   await sendWhatsApp(phone, msg);
 }
