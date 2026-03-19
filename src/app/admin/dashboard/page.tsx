@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   getSession, getRecruitmentStatus, toggleRecruitment, logout, 
-  getRegistrations, updateRegistrationStatus, getProfiles, updateOwnProfile, updateProfileAdmin 
+  getRegistrations, updateRegistrationStatus, deleteRegistration, getProfiles, updateOwnProfile, updateProfileAdmin 
 } from '@/app/actions/admin';
 import { 
   getGallery, saveGalleryItem, deleteGalleryItem,
@@ -392,16 +392,19 @@ export default function AdminDashboard() {
                         <td className="p-4 text-ltec-cyan text-sm">{app.division_choice}</td>
                         <td className="p-4 text-gray-400 text-sm max-w-xs truncate">{app.motivation}</td>
                         <td className="p-4">
-                          {app.status === 'pending' ? (
-                            <div className="flex justify-center gap-2">
-                              <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'accepted')} className="px-4 py-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/40 rounded-lg text-xs font-semibold border border-emerald-500/30 transition shadow-lg flex items-center gap-1"><Check size={14}/> TERIMA</button>
-                              <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'rejected')} className="px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500/40 rounded-lg text-xs font-semibold border border-red-500/30 transition shadow-lg flex items-center gap-1"><X size={14}/> TOLAK</button>
-                            </div>
-                          ) : (
-                            <div className="text-center font-bold tracking-widest text-xs">
-                              {app.status === 'accepted' ? <span className="text-emerald-500 px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">DITERIMA</span> : <span className="text-red-500 px-3 py-1 bg-red-500/10 rounded-full border border-red-500/20">DITOLAK</span>}
-                            </div>
-                          )}
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            {app.status === 'pending' ? (
+                              <div className="flex justify-center gap-2">
+                                <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'accepted')} className="px-4 py-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/40 rounded-lg text-xs font-semibold border border-emerald-500/30 transition shadow-lg flex items-center gap-1"><Check size={14}/> TERIMA</button>
+                                <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'rejected')} className="px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500/40 rounded-lg text-xs font-semibold border border-red-500/30 transition shadow-lg flex items-center gap-1"><X size={14}/> TOLAK</button>
+                              </div>
+                            ) : (
+                              <div className="text-center font-bold tracking-widest text-xs">
+                                {app.status === 'accepted' ? <span className="text-emerald-500 px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">DITERIMA</span> : <span className="text-red-500 px-3 py-1 bg-red-500/10 rounded-full border border-red-500/20">DITOLAK</span>}
+                              </div>
+                            )}
+                            <button onClick={async () => { if(confirm('Hapus permanen pelamar ini?')) { setProcId(`del_${app.id}`); await deleteRegistration(app.id); await loadData(); setProcId(null); } }} disabled={procId === `del_${app.id}`} className="text-xs text-red-500/50 hover:text-red-500 border border-red-500/20 rounded px-3 py-1 mt-1 transition w-fit">{procId === `del_${app.id}` ? 'Menghapus...' : 'Hapus Data'}</button>
+                          </div>
                         </td>
                       </tr>
                     ))}

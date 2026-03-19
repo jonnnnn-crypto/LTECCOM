@@ -75,7 +75,7 @@ export default function DivisionRecruitment({ isOpen = false, divisions = [] }: 
                     </div>
                   </div>
                   <h3 className="text-2xl font-serif text-white mb-2">{div.name}</h3>
-                  <div className="text-sm font-medium text-ltec-cyan mb-3">Sisa Kuota: {div.quota} Siswa</div>
+                  <div className="text-sm font-medium text-ltec-cyan mb-3">Sisa Kuota: {div.remaining_quota} Siswa</div>
                   <p className="text-gray-400 font-light leading-relaxed mb-8">
                     {div.description}
                   </p>
@@ -84,13 +84,13 @@ export default function DivisionRecruitment({ isOpen = false, divisions = [] }: 
                 <div className="pt-6 border-t border-white/10 mt-auto">
                   <button
                     onClick={() => isOpen && setSelectedDivision(div.name)}
-                    disabled={!isOpen || div.quota <= 0}
+                    disabled={!isOpen || div.remaining_quota <= 0}
                     className={`w-full py-4 rounded-xl font-medium tracking-wide transition-all flex items-center justify-center gap-2 relative overflow-hidden group/btn disabled:opacity-50 disabled:cursor-not-allowed border
-                      ${(isOpen && div.quota > 0) ? 'bg-white/5 hover:bg-white/10 text-white border-white/10 hover:border-white/30' : 'bg-gray-900/50 text-gray-500 border-gray-800'}`}
+                      ${(isOpen && div.remaining_quota > 0) ? 'bg-white/5 hover:bg-white/10 text-white border-white/10 hover:border-white/30' : 'bg-gray-900/50 text-gray-500 border-gray-800'}`}
                   >
-                    <span className="relative z-10">{(isOpen && div.quota > 0) ? 'Daftar Divisi Ini' : 'Pendaftaran Ditutup'}</span>
-                    {(isOpen && div.quota > 0) && <ArrowRight size={18} className="relative z-10 group-hover/btn:translate-x-1 transition-transform" />}
-                    {(isOpen && div.quota > 0) && <div className={`absolute inset-0 bg-gradient-to-r ${cfg.color} opacity-0 group-hover/btn:opacity-20 transition-opacity`} />}
+                    <span className="relative z-10">{(isOpen && div.remaining_quota > 0) ? 'Daftar Divisi Ini' : 'Pendaftaran Ditutup'}</span>
+                    {(isOpen && div.remaining_quota > 0) && <ArrowRight size={18} className="relative z-10 group-hover/btn:translate-x-1 transition-transform" />}
+                    {(isOpen && div.remaining_quota > 0) && <div className={`absolute inset-0 bg-gradient-to-r ${cfg.color} opacity-0 group-hover/btn:opacity-20 transition-opacity`} />}
                   </button>
                 </div>
               </motion.div>

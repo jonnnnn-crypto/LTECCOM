@@ -123,15 +123,16 @@ export async function getDivisionsInfo() {
     const supabase = await createClient();
     const { data: divisions } = await supabase.from('divisions_info').select('*').order('id', { ascending: true });
     
-    const { data: accepted } = await supabase.from('registrations').select('division_choice').eq('status', 'accepted');
+    // Count ACTUAL members with the role 'Anggota' in the division directory to determine active quota capacity
+    const { data: members } = await supabase.from('division_members').select('division').eq('role', 'Anggota');
 
     if (!divisions) return [];
     
     return divisions.map(div => {
-      const acceptedCount = accepted?.filter(a => a.division_choice === div.name).length || 0;
+      const activeMembers = members?.filter(m => m.division === div.name).length || 0;
       return {
         ...div,
-        remaining_quota: Math.max(0, div.quota - acceptedCount)
+        remaining_quota: Math.max(0, div.quota - activeMembers)
       };
     });
   } catch { return []; }

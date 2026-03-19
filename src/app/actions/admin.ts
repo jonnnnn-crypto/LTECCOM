@@ -121,7 +121,16 @@ export async function updateRegistrationStatus(id: string, phone: string, name: 
     await supabase.from('registrations').update({ status }).eq('id', id);
     
     if (status === 'accepted') {
-      // Need to find the Ketua & Wakil profiles for this division to send their numbers via WA
+      // 1. Automatically inject the accepted applicant into the Members Registry permanently
+      await supabase.from('division_members').insert({
+        name: name,
+        role: 'Anggota',
+        batch_year: new Date().getFullYear().toString(),
+        division: division,
+        photo_url: '' // Will be populated by the Admin later if desired
+      });
+
+      // 2. Need to find the Ketua & Wakil profiles for this division to send their numbers via WA
       const { data: leaders } = await supabase.from('profiles')
         .select('role, full_name, phone_number')
         .eq('division', division)
@@ -144,6 +153,17 @@ export async function updateRegistrationStatus(id: string, phone: string, name: 
     }
 
     revalidatePath('/admin/dashboard');
+    revalidatePath('/admin/dashboard');
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+export async function deleteRegistration(id: string) {
+  try {
+    const supabase = await createClient();
+    await supabase.from('registrations').delete().eq('id', id);
     revalidatePath('/admin/dashboard');
     return { success: true };
   } catch (e: any) {
