@@ -201,6 +201,7 @@ export default function AdminDashboard() {
 
   if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-ltec-cyan">Memuat Integrasi CMS...</div>;
 
+  const isAdmin = session?.role === 'Ketua Umum' || session?.role === 'Wakil Ketua Umum';
   const isDivisionLeader = session?.role === 'Ketua Divisi' || session?.role === 'Wakil Ketua Divisi';
   const needsProfileSetup = isDivisionLeader && (!session?.phone_number || session?.phone_number.includes('08123456789') || session?.name?.startsWith('Ketua Divisi') || session?.name?.startsWith('Wakil Ketua'));
 
