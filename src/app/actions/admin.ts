@@ -189,7 +189,8 @@ export async function updateRegistrationStatus(id: string, phone: string, name: 
 export async function deleteRegistration(id: string) {
   try {
     const supabase = await createClient();
-    await supabase.from('registrations').delete().eq('id', id);
+    const { error } = await supabase.from('registrations').delete().eq('id', id);
+    if (error) throw error;
     revalidatePath('/admin/dashboard');
     return { success: true };
   } catch (e: any) {
@@ -201,11 +202,15 @@ export async function deleteAllRegistrations() {
   try {
     const supabase = await createClient();
     // Fetch all IDs to bypass PostgREST bulk delete safety restrictions cleanly.
-    const { data: allIds } = await supabase.from('registrations').select('id');
+    const { data: allIds, error: selErr } = await supabase.from('registrations').select('id');
+    if (selErr) throw selErr;
     
     if (allIds && allIds.length > 0) {
-      const idList = allIds.map(x => x.id);
-      await supabase.from('registrations').delete().in('id', idList);
+      // Loop individually guaranteeing bypass of PostgREST array protection layers
+      for (const item of allIds) {
+        const { error: delErr } = await supabase.from('registrations').delete().eq('id', item.id);
+        if (delErr) throw delErr;
+      }
     }
 
     revalidatePath('/admin/dashboard');

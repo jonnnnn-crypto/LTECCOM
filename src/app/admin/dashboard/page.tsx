@@ -377,7 +377,8 @@ export default function AdminDashboard() {
                      onClick={async () => {
                        if (procId === 'confirm_clear_all') {
                          setProcId('clearing_all');
-                         await deleteAllRegistrations();
+                         const res = await deleteAllRegistrations();
+                         if (!res?.success) alert('Gagal membersihkan data: ' + res?.error);
                          await loadData();
                          setProcId(null);
                        } else {
