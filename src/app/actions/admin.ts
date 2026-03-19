@@ -122,13 +122,14 @@ export async function updateRegistrationStatus(id: string, phone: string, name: 
     
     if (status === 'accepted') {
       // 1. Automatically inject the accepted applicant into the Members Registry permanently
-      await supabase.from('division_members').insert({
+      const { error: insErr } = await supabase.from('division_members').insert({
         name: name,
         role: 'Anggota',
         batch_year: new Date().getFullYear().toString(),
         division: division,
         photo_url: '' // Will be populated by the Admin later if desired
       });
+      if (insErr) throw insErr;
 
       // 2. Fetch the Division's WhatsApp Group Link
       const { data: divInfo } = await supabase.from('divisions_info')
@@ -143,7 +144,7 @@ export async function updateRegistrationStatus(id: string, phone: string, name: 
       if (delErr) throw delErr;
 
       // 4. Send final onboarding WA including Group Link natively
-      notifyFinalAcceptance(phone, name, division, groupLink);
+      await notifyFinalAcceptance(phone, name, division, groupLink);
     } else {
       // Update status to 'interview' or 'rejected'
       const { error: updErr } = await supabase.from('registrations').update({ status }).eq('id', id);
@@ -161,7 +162,7 @@ export async function updateRegistrationStatus(id: string, phone: string, name: 
       const wakil = leaders?.find(l => l.role === 'Wakil Ketua Divisi');
 
       if (ketua) {
-        notifyInterview(
+        await notifyInterview(
           phone, 
           name, 
           division, 

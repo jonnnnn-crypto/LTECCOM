@@ -96,7 +96,7 @@ export default function AdminDashboard() {
   const processRegistration = async (id: string, phone: string, name: string, div: string, status: 'interview' | 'accepted' | 'rejected') => {
     setProcId(id);
     const res = await updateRegistrationStatus(id, phone, name, div, status);
-    if (!res?.success) alert('Gagal memproses pelamar.');
+    if (!res?.success) alert('Gagal memproses pelamar: ' + (res?.error || 'Koneksi terputus/Timeout'));
     await loadData();
     setProcId(null);
   };
@@ -413,25 +413,31 @@ export default function AdminDashboard() {
                         {isAdmin && <td className="p-4 text-ltec-cyan text-sm">{app.division_choice}</td>}
                         <td className="p-4 text-gray-400 text-sm max-w-xs truncate">{app.motivation}</td>
                         <td className="p-4">
-                          <div className="flex flex-col items-center justify-center gap-2">
-                            {(app.status === 'pending' || !app.status) && (
-                              <div className="flex justify-center gap-2">
-                                <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'interview')} className="px-4 py-2 bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/40 rounded-lg text-xs font-semibold border border-indigo-500/30 transition shadow-lg flex items-center gap-1"><Check size={14}/> LOLOS BERKAS</button>
-                                <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'rejected')} className="px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500/40 rounded-lg text-xs font-semibold border border-red-500/30 transition shadow-lg flex items-center gap-1"><X size={14}/> TOLAK</button>
-                              </div>
+                          <div className="flex flex-col items-center justify-center gap-2 w-full max-w-[150px] mx-auto">
+                            {(app.status === 'pending' || !app.status || app.status === 'interview') && (
+                              <select 
+                                value="" 
+                                onChange={(e) => {
+                                  if(e.target.value) {
+                                    processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, e.target.value as any);
+                                  }
+                                }}
+                                className="px-3 py-2 bg-black col-span-1 border border-white/20 rounded-lg text-xs font-semibold text-white focus:border-ltec-cyan outline-none cursor-pointer w-full text-center hover:bg-white/5 transition"
+                                disabled={!!procId}
+                              >
+                                <option value="">{procId === app.id ? 'Memproses...' : '-- Tentukan --'}</option>
+                                {(app.status === 'pending' || !app.status) && <option value="interview">LOLOS BERKAS</option>}
+                                {(app.status === 'pending' || !app.status) && <option value="rejected">TOLAK BERKAS</option>}
+                                {app.status === 'interview' && <option value="accepted">TERIMA ANGGOTA</option>}
+                                {app.status === 'interview' && <option value="rejected">GUGUR WAWANCARA</option>}
+                              </select>
                             )}
                             {app.status === 'interview' && (
-                              <div className="flex justify-center flex-col gap-2 items-center">
-                                <span className="text-indigo-400 text-[10px] font-bold tracking-widest bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 mb-1">TAHAP WAWANCARA</span>
-                                <div className="flex justify-center gap-2">
-                                  <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'accepted')} className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/40 rounded text-xs font-semibold border border-emerald-500/30 transition shadow-lg flex items-center gap-1"><Check size={14}/> TERIMA</button>
-                                  <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'rejected')} className="px-3 py-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/40 rounded text-xs font-semibold border border-red-500/30 transition shadow-lg flex items-center gap-1"><X size={14}/> TOLAK</button>
-                                </div>
-                              </div>
+                              <span className="text-indigo-400 text-[10px] font-bold tracking-widest bg-indigo-500/10 px-3 py-1 mt-1 rounded-full border border-indigo-500/20 text-center w-full block">TAHAP WAWANCARA</span>
                             )}
                             {app.status === 'rejected' && (
-                              <div className="text-center font-bold tracking-widest text-xs mt-2">
-                                <span className="text-red-500 px-3 py-1 bg-red-500/10 rounded-full border border-red-500/20">DITOLAK</span>
+                              <div className="text-center font-bold tracking-widest text-xs mb-1 w-full">
+                                <span className="text-red-500 block px-3 py-1 bg-red-500/10 rounded-full border border-red-500/20">DITOLAK</span>
                               </div>
                             )}
                             <button 
