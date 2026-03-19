@@ -9,7 +9,20 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [sessionActive, setSessionActive] = useState(false);
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const checkUser = async () => {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
+        setSessionActive(true);
+      }
+    };
+    checkUser();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,13 +80,23 @@ export default function AdminLogin() {
               placeholder="••••••••"
             />
           </div>
-          <button 
-            disabled={loading}
-            type="submit"
-            className="w-full bg-ltec-blue hover:bg-blue-600 text-white font-medium py-4 rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
-          >
-            {loading ? 'Memverifikasi...' : 'Otorisasi Akses'}
-          </button>
+          {sessionActive ? (
+            <button 
+              type="button"
+              onClick={() => router.push('/admin/dashboard')}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-4 rounded-xl transition-all shadow-lg hover:shadow-xl mt-4"
+            >
+              Lanjutkan ke Panel Admin
+            </button>
+          ) : (
+            <button 
+              disabled={loading}
+              type="submit"
+              className="w-full bg-ltec-blue hover:bg-blue-600 text-white font-medium py-4 rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50 mt-4"
+            >
+              {loading ? 'Memverifikasi...' : 'Otorisasi Akses'}
+            </button>
+          )}
         </form>
       </div>
     </main>
