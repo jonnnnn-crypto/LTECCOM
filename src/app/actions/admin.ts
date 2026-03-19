@@ -80,7 +80,7 @@ export async function getSession() {
 export async function submitRegistration(formData: FormData) {
   const fullName = formData.get('fullName') as string;
   const email = formData.get('email') as string;
-  const phone = formData.get('phone') as string;
+  const phone = formData.get('phoneNumber') as string;
   const division = formData.get('division') as string;
   const motivation = formData.get('motivation') as string;
 

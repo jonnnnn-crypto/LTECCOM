@@ -1,5 +1,5 @@
-import Navbar from '@/components/ui/Navbar';
-import Footer from '@/components/ui/Footer';
+;
+;
 import DivisionRecruitment from '@/components/Sections/DivisionRecruitment';
 import { getRecruitmentStatus } from '@/app/actions/admin';
 import { getDivisionsInfo } from '@/app/actions/cms';
@@ -11,11 +11,11 @@ export default async function RekrutmenPage() {
 
   return (
     <main className="min-h-screen bg-[#050505] selection:bg-ltec-cyan/30 selection:text-white">
-      <Navbar />
+      
       {/* Main Recruitment Section */}
       <DivisionRecruitment isOpen={isOpen} divisions={divisions} />
 
-      <Footer />
+      
     </main>
   );
 }

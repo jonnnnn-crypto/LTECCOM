@@ -1,5 +1,5 @@
-import Navbar from '@/components/ui/Navbar';
-import Footer from '@/components/ui/Footer';
+;
+;
 import Hero from '@/components/Sections/Hero';
 import Journey from '@/components/Sections/Journey';
 import Achievements from '@/components/Sections/Achievements';
@@ -14,13 +14,13 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-[#050505] selection:bg-ltec-cyan/30 selection:text-white">
-      <Navbar />
+      
       <Hero />
       <Journey />
       <Achievements achievements={achievements} />
       <Events gallery={gallery} />
       <Testimonials testimonials={testimonials} />
-      <Footer />
+      
     </main>
   );
 }

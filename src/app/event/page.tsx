@@ -1,5 +1,5 @@
-import Navbar from '@/components/ui/Navbar';
-import Footer from '@/components/ui/Footer';
+;
+;
 import { getWebinarEvents } from '@/app/actions/cms';
 import { Calendar, MonitorPlay, Trophy, Link as LinkIcon, Users } from 'lucide-react';
 
@@ -8,7 +8,7 @@ export default async function EventPage() {
 
   return (
     <main className="min-h-screen bg-[#050505] selection:bg-ltec-cyan/30 selection:text-white relative overflow-hidden">
-      <Navbar />
+      
 
       <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-emerald-500/10 blur-[150px] pointer-events-none rounded-full" />
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-ltec-cyan/5 blur-[120px] pointer-events-none rounded-full" />
@@ -76,7 +76,7 @@ export default async function EventPage() {
         </div>
       </section>
 
-      <Footer />
+      
     </main>
   );
 }

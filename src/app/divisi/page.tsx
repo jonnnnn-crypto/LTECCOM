@@ -1,5 +1,5 @@
-import Navbar from '@/components/ui/Navbar';
-import Footer from '@/components/ui/Footer';
+;
+;
 import Structure from '@/components/Sections/Structure';
 import DivisionRecruitment from '@/components/Sections/DivisionRecruitment';
 import { getProfiles, getRecruitmentStatus } from '@/app/actions/admin';
@@ -12,10 +12,10 @@ export default async function DivisiPage() {
 
   return (
     <main className="min-h-screen bg-[#050505] selection:bg-ltec-cyan/30 selection:text-white">
-      <Navbar />
+      
       <Structure profiles={profiles} divisions={divisions} />
       <DivisionRecruitment isOpen={isOpen} divisions={divisions} />
-      <Footer />
+      
     </main>
   );
 }
