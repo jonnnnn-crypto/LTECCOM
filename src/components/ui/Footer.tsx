@@ -45,6 +45,7 @@ export default function Footer() {
             <ul className="space-y-4">
               <li><Link href="/tentang" className="text-gray-400 hover:text-ltec-cyan transition-colors font-light">Tentang LTEC</Link></li>
               <li><Link href="/program" className="text-gray-400 hover:text-ltec-cyan transition-colors font-light">Program</Link></li>
+              <li><Link href="/event" className="text-gray-400 hover:text-ltec-cyan transition-colors font-light">Agenda & Event</Link></li>
               <li><Link href="/perjalanan" className="text-gray-400 hover:text-ltec-cyan transition-colors font-light">Jejak Langkah</Link></li>
               <li><Link href="/galeri" className="text-gray-400 hover:text-ltec-cyan transition-colors font-light">Galeri Kegiatan</Link></li>
               <li><Link href="/prestasi" className="text-gray-400 hover:text-ltec-cyan transition-colors font-light">Prestasi LTEC</Link></li>

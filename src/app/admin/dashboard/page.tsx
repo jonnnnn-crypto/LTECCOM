@@ -9,11 +9,12 @@ import {
   getGallery, saveGalleryItem, deleteGalleryItem,
   getAchievements, saveAchievement, deleteAchievement,
   getDivisionsInfo, saveDivisionInfo,
-  getTestimonials, saveTestimonial, deleteTestimonial
+  getTestimonials, saveTestimonial, deleteTestimonial,
+  getWebinarEvents, saveWebinarEvent, deleteWebinarEvent
 } from '@/app/actions/cms';
 import { 
   Power, Settings, Users, LogOut, ShieldCheck, Check, X,
-  AlertTriangle, Save, Image as ImageIcon, Award, Layout, MessageSquare, Menu
+  AlertTriangle, Save, Image as ImageIcon, Award, Layout, MessageSquare, Menu, Calendar
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -21,7 +22,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pelamar' | 'struktur' | 'galeri' | 'prestasi' | 'divisi' | 'testimoni'>('pelamar');
+  const [activeTab, setActiveTab] = useState<'pelamar' | 'struktur' | 'galeri' | 'prestasi' | 'divisi' | 'testimoni' | 'event'>('pelamar');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Data States
@@ -31,6 +32,7 @@ export default function AdminDashboard() {
   const [achievements, setAchievements] = useState<any[]>([]);
   const [divisions, setDivisions] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
+  const [webinars, setWebinars] = useState<any[]>([]);
 
   // Form States
   const [procId, setProcId] = useState<string | null>(null);
@@ -51,7 +53,11 @@ export default function AdminDashboard() {
     setSession(sess);
     setIsOpen(await getRecruitmentStatus());
     setApplicants(await getRegistrations() || []);
+    
+    // Loaded by ALL Admins
+    setWebinars(await getWebinarEvents() || []);
 
+    // Loaded by Ketum / Waketum
     if (sess.role === 'Ketua Umum' || sess.role === 'Wakil Ketua Umum') {
       setProfiles(await getProfiles() || []);
       setGallery(await getGallery() || []);
@@ -159,6 +165,21 @@ export default function AdminDashboard() {
     setProcId(null);
   };
 
+  const handleSaveWebinar = async () => {
+    setProcId('save_webinar');
+    const res = await saveWebinarEvent(editingCmsId === 'NEW' ? null : editingCmsId, cmsForm);
+    if (res.success) { setEditingCmsId(null); await loadData(); } else alert(`Gagal: ${res.error}`);
+    setProcId(null);
+  };
+
+  const handleDeleteWebinar = async (id: string) => {
+    if (!confirm('Hapus Event/Webinar ini?')) return;
+    setProcId(id);
+    await deleteWebinarEvent(id);
+    await loadData();
+    setProcId(null);
+  };
+
   // Start edit helpers
   const startEditGallery = (item?: any) => {
     if (item) { setEditingCmsId(item.id); setCmsForm(item); }
@@ -171,6 +192,10 @@ export default function AdminDashboard() {
   const startEditTestimonial = (item?: any) => {
     if (item) { setEditingCmsId(item.id); setCmsForm(item); }
     else { setEditingCmsId('NEW'); setCmsForm({ name: '', role: '', content: '', image_url: '' }); }
+  };
+  const startEditWebinar = (item?: any) => {
+    if (item) { setEditingCmsId(item.id); setCmsForm(item); }
+    else { setEditingCmsId('NEW'); setCmsForm({ title: '', description: '', event_date: '', type: 'Webinar', link: '', image_url: '' }); }
   };
   const startEditDivisions = () => {
     const defaultForms: any = {};
@@ -204,7 +229,8 @@ export default function AdminDashboard() {
   }
 
   const TABS = [
-    { id: 'pelamar', label: 'Pelamar', icon: Users, adminOnly: false },
+    { id: 'pelamar', label: 'Pelamar Divisi', icon: Users, adminOnly: false },
+    { id: 'event', label: 'Event & Webinar', icon: Calendar, adminOnly: false },
     { id: 'struktur', label: 'Struktur Pengurus', icon: ShieldCheck, adminOnly: true },
     { id: 'galeri', label: 'Galeri Publik', icon: ImageIcon, adminOnly: true },
     { id: 'prestasi', label: 'Prestasi', icon: Award, adminOnly: true },
@@ -329,6 +355,62 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* TAB: EVENT & WEBINAR */}
+          {activeTab === 'event' && (
+             <div>
+               <div className="flex justify-between items-center mb-6">
+                 <div>
+                   <h2 className="text-2xl font-serif text-white">Event & Webinar Manager</h2>
+                   <p className="text-sm text-gray-400">Jadwalkan Webinar, Lomba, atau Kampus Visit. Publik dapat melihat ini.</p>
+                 </div>
+                 <button onClick={() => startEditWebinar()} className="px-4 py-2 bg-emerald-500/20 text-emerald-400 font-semibold rounded-lg text-sm hover:opacity-80 border border-emerald-500/30">+ Tambah Event Baru</button>
+               </div>
+               
+               {editingCmsId && (
+                 <div className="bg-white/5 p-6 rounded-2xl border border-emerald-500/30 mb-8 max-w-2xl">
+                   <h3 className="text-lg text-white mb-4">{editingCmsId === 'NEW' ? 'Perancangan Agenda Baru' : 'Ubah Agenda'}</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                     <input placeholder="Judul Seminar / Perlombaan" value={cmsForm.title} onChange={e => setCmsForm({...cmsForm, title: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2" />
+                     <input placeholder="Tanggal (cth. 12 Agustus 2026)" value={cmsForm.event_date} onChange={e => setCmsForm({...cmsForm, event_date: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white" />
+                     <select value={cmsForm.type} onChange={e => setCmsForm({...cmsForm, type: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white">
+                        <option value="Webinar">Webinar</option>
+                        <option value="Lomba">Lomba (CTF / Kompetisi)</option>
+                        <option value="Lainnya">Lainnya</option>
+                     </select>
+                     <textarea placeholder="Deskripsi Event" value={cmsForm.description} onChange={e => setCmsForm({...cmsForm, description: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2 h-24" />
+                     <input placeholder="URL Pendaftaran (Link Google Form)" value={cmsForm.link} onChange={e => setCmsForm({...cmsForm, link: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2" />
+                     <input placeholder="URL Banner Gambar (Opsional)" value={cmsForm.image_url} onChange={e => setCmsForm({...cmsForm, image_url: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2" />
+                   </div>
+                   <div className="flex justify-end gap-3">
+                     <button onClick={() => setEditingCmsId(null)} className="px-4 py-2 text-gray-400 hover:text-white">Batal</button>
+                     <button onClick={handleSaveWebinar} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium">{procId ? 'Menyimpan...' : 'Simpan Event'}</button>
+                   </div>
+                 </div>
+               )}
+
+               <div className="space-y-4">
+                 {webinars.map(item => (
+                   <div key={item.id} className="p-5 bg-white/5 rounded-2xl border border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-emerald-500/20 transition-colors">
+                     <div className="flex-1">
+                       <div className="flex flex-wrap items-center gap-3 mb-2">
+                         <span className="text-xs font-bold tracking-widest text-black bg-emerald-400 px-2 py-1 rounded">{item.type}</span>
+                         <span className="text-sm text-gray-400"><Calendar size={14} className="inline mr-1" /> {item.event_date}</span>
+                       </div>
+                       <h4 className="text-xl text-white font-medium mb-1">{item.title}</h4>
+                       <p className="text-sm text-gray-400 mb-2 line-clamp-2">{item.description}</p>
+                       <p className="text-xs text-ltec-cyan">Dibuat oleh: {item.created_by}</p>
+                     </div>
+                     <div className="flex gap-2 w-full md:w-auto mt-4 md:mt-0">
+                       <button onClick={() => startEditWebinar(item)} className="p-3 bg-white/10 hover:bg-white/20 rounded-xl flex-1 md:flex-none text-center grid place-items-center"><Settings size={18}/></button>
+                       <button onClick={() => handleDeleteWebinar(item.id)} className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500/30 rounded-xl flex-1 md:flex-none text-center grid place-items-center"><X size={18}/></button>
+                     </div>
+                   </div>
+                 ))}
+                 {webinars.length === 0 && <p className="text-gray-500 italic py-10 text-center border border-white/5 rounded-2xl border-dashed">Belum ada jadwal Event maupun Webinar yang dirancang.</p>}
+               </div>
+             </div>
+          )}
+
           {/* TAB: STRUKTUR PENGURUS */}
           {activeTab === 'struktur' && isAdmin && (
             <div>
@@ -414,6 +496,7 @@ export default function AdminDashboard() {
                      </div>
                    </div>
                  ))}
+                 {gallery.length === 0 && <div className="text-gray-500 text-sm mt-5">Tidak ada foto di galeri publik.</div>}
                </div>
             </div>
           )}
@@ -456,6 +539,7 @@ export default function AdminDashboard() {
                      </div>
                    </div>
                  ))}
+                 {achievements.length === 0 && <div className="text-gray-500 text-sm mt-5">Belum ada rekapitulasi prestasi.</div>}
                </div>
              </div>
           )}
@@ -543,6 +627,7 @@ export default function AdminDashboard() {
                      </div>
                    </div>
                  ))}
+                 {testimonials.length === 0 && <div className="text-gray-500 text-sm mt-5 col-span-2">Belum ada Testimoni untuk dibaca.</div>}
                </div>
              </div>
           )}

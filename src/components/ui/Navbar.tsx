@@ -31,6 +31,7 @@ export default function Navbar() {
   const navItems = [
     { label: 'Tentang', href: '/tentang' },
     { label: 'Program', href: '/program' },
+    { label: 'Event', href: '/event' },
     { label: 'Divisi', href: '/divisi' },
     { label: 'Perjalanan', href: '/perjalanan' },
     { label: 'Galeri', href: '/galeri' },
@@ -41,6 +42,7 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Tentang', href: '/tentang' },
     { name: 'Program', href: '/program' },
+    { name: 'Event', href: '/event' },
     { name: 'Divisi', href: '/divisi' },
     { name: 'Perjalanan', href: '/perjalanan' },
     { name: 'Galeri', href: '/galeri' },

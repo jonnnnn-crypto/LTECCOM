@@ -7,11 +7,18 @@ import { getSession } from './admin';
 // SECURITY: Reusable authorization check for Admin CMS writes
 async function verifySuperAdmin() {
   const session = await getSession();
-  if (!session) return { authorized: false, error: 'Unauthorized login state' };
+  if (!session) return { authorized: false, error: 'Unauthorized login state', session: null };
   if (session.role !== 'Ketua Umum' && session.role !== 'Wakil Ketua Umum') {
-    return { authorized: false, error: 'Akses Ditolak. Tabel CMS ini hanya dikendalikan Ketua/Wakil Ketua Umum.' };
+    return { authorized: false, error: 'Akses Ditolak. Tabel CMS ini hanya dikendalikan Ketua/Wakil Ketua Umum.', session };
   }
-  return { authorized: true, error: null };
+  return { authorized: true, error: null, session };
+}
+
+// SECURITY: Open Admin scope for Events/Webinars
+async function verifyAnyAdmin() {
+  const session = await getSession();
+  if (!session) return { authorized: false, error: 'Unauthorized login state', session: null };
+  return { authorized: true, error: null, session };
 }
 
 // ============================================
@@ -160,6 +167,48 @@ export async function deleteTestimonial(id: string) {
   const { error } = await supabase.from('testimonials').delete().eq('id', id);
   revalidatePath('/tentang');
   revalidatePath('/');
+  revalidatePath('/admin/dashboard');
+  return { success: !error, error: error?.message };
+}
+
+// ============================================
+// WEBINAR & EVENTS
+// ============================================
+
+export async function getWebinarEvents() {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.from('webinar_events').select('*').order('created_at', { ascending: false });
+    return data || [];
+  } catch { return []; }
+}
+
+export async function saveWebinarEvent(id: string | null, payload: { title: string, description: string, event_date: string, type: string, link: string, image_url: string }) {
+  const auth = await verifyAnyAdmin();
+  if (!auth.authorized || !auth.session) return { success: false, error: auth.error };
+
+  const supabase = await createClient();
+  const fullPayload = { ...payload, created_by: auth.session.name };
+  
+  let error;
+  if (id) {
+    ({ error } = await supabase.from('webinar_events').update(fullPayload).eq('id', id));
+  } else {
+    ({ error } = await supabase.from('webinar_events').insert(fullPayload));
+  }
+  if (error) return { success: false, error: error.message };
+  
+  revalidatePath('/event');
+  revalidatePath('/admin/dashboard');
+  return { success: true };
+}
+
+export async function deleteWebinarEvent(id: string) {
+  const auth = await verifyAnyAdmin();
+  if (!auth.authorized) return { success: false, error: auth.error };
+  const supabase = await createClient();
+  const { error } = await supabase.from('webinar_events').delete().eq('id', id);
+  revalidatePath('/event');
   revalidatePath('/admin/dashboard');
   return { success: !error, error: error?.message };
 }
