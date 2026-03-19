@@ -423,7 +423,7 @@ export default function AdminDashboard() {
                               <div className="flex justify-center flex-col gap-2 items-center">
                                 <span className="text-indigo-400 text-[10px] font-bold tracking-widest bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 mb-1">TAHAP WAWANCARA</span>
                                 <div className="flex justify-center gap-2">
-                                  <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'accepted')} className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/40 rounded text-xs font-semibold border border-emerald-500/30 transition shadow-lg flex items-center gap-1"><Check size={14}/> ANGGOTA</button>
+                                  <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'accepted')} className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/40 rounded text-xs font-semibold border border-emerald-500/30 transition shadow-lg flex items-center gap-1"><Check size={14}/> TERIMA</button>
                                   <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'rejected')} className="px-3 py-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/40 rounded text-xs font-semibold border border-red-500/30 transition shadow-lg flex items-center gap-1"><X size={14}/> TOLAK</button>
                                 </div>
                               </div>

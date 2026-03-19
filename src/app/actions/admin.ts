@@ -174,7 +174,12 @@ export async function updateRegistrationStatus(id: string, phone: string, name: 
     }
 
     revalidatePath('/admin/dashboard');
-    revalidatePath('/admin/dashboard');
+    if (status === 'accepted') {
+      revalidatePath('/rekrutmen');
+      revalidatePath('/divisi');
+      revalidatePath('/program');
+      revalidatePath('/');
+    }
     return { success: true };
   } catch (e: any) {
     return { success: false, error: e.message };
