@@ -1,6 +1,8 @@
 'use client';
-import { motion } from 'framer-motion';
-import { Shield, Server, Code, Wifi, Cloud, ArrowRight, UserCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Shield, Server, Code, Wifi, Cloud, ArrowRight, UserCircle2, X } from 'lucide-react';
+import { submitRegistration } from '@/app/actions/admin';
 
 const DIVISIONS = [
   {
@@ -66,6 +68,29 @@ const DIVISIONS = [
 ];
 
 export default function DivisionRecruitment({ isOpen = false }: { isOpen?: boolean }) {
+  const [selectedDiv, setSelectedDiv] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setSuccessMsg('');
+
+    const formData = new FormData(e.currentTarget);
+    formData.append('division', selectedDiv || '');
+
+    const res = await submitRegistration(formData);
+    
+    if (res.success) {
+      setSuccessMsg('Pendaftaran Berhasil! Silakan cek WhatsApp Anda untuk info lebih lanjut.');
+      setTimeout(() => setSelectedDiv(null), 3000); // Close after 3 seconds
+    } else {
+      alert(`Gagal: ${res.error}`);
+    }
+    setLoading(false);
+  };
+
   return (
     <section className="py-24 bg-[#050505] relative z-10 border-t border-white/5">
       <div className="max-w-7xl mx-auto px-6">
@@ -133,6 +158,7 @@ export default function DivisionRecruitment({ isOpen = false }: { isOpen?: boole
                   </div>
 
                   <button 
+                    onClick={() => setIsOpen(isOpen ? setSelectedDiv(div.name) : undefined)}
                     disabled={!isOpen}
                     className={`w-full md:w-auto px-6 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 group border 
                       ${isOpen 
@@ -152,6 +178,62 @@ export default function DivisionRecruitment({ isOpen = false }: { isOpen?: boole
           })}
         </div>
       </div>
+
+      <AnimatePresence>
+        {selectedDiv && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="glass-panel w-full max-w-lg p-8 rounded-[2rem] border border-white/10 relative"
+            >
+              <button onClick={() => setSelectedDiv(null)} className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors">
+                <X size={24} />
+              </button>
+              
+              <h3 className="text-3xl font-serif text-white mb-2">Formulir Pendaftaran</h3>
+              <p className="text-ltec-cyan text-sm mb-8">Pilihan Divisi: {selectedDiv}</p>
+
+              {successMsg ? (
+                <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-6 rounded-2xl text-center">
+                  <p className="font-medium text-lg">{successMsg}</p>
+                </div>
+              ) : (
+                <form onSubmit={handleRegister} className="space-y-5">
+                  <div>
+                    <label className="block text-gray-400 text-xs uppercase tracking-widest mb-2">Nama Lengkap</label>
+                    <input name="fullName" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-ltec-cyan focus:outline-none" placeholder="Masukkan nama..." />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-gray-400 text-xs uppercase tracking-widest mb-2">Email</label>
+                      <input type="email" name="email" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-ltec-cyan focus:outline-none" placeholder="Email aktif" />
+                    </div>
+                    <div>
+                      <label className="block text-gray-400 text-xs uppercase tracking-widest mb-2">No. WhatsApp</label>
+                      <input type="tel" name="phone" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-ltec-cyan focus:outline-none" placeholder="08xx..." />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-gray-400 text-xs uppercase tracking-widest mb-2">Motivasi Bergabung</label>
+                    <textarea name="motivation" required rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-ltec-cyan focus:outline-none resize-none" placeholder="Mengapa Anda tertarik divisi ini..." />
+                  </div>
+                  
+                  <button disabled={loading} type="submit" className="w-full bg-ltec-cyan hover:bg-cyan-600 text-black font-medium py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(0,255,255,0.2)] hover:shadow-[0_0_30px_rgba(0,255,255,0.4)] disabled:opacity-50">
+                    {loading ? 'Mengirim Data...' : 'Kirim Pendaftaran'}
+                  </button>
+                </form>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

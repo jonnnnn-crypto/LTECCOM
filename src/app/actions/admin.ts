@@ -1,69 +1,140 @@
 'use server';
 
-import fs from 'fs';
-import path from 'path';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-
-const DB_PATH = path.join(process.cwd(), 'src/lib/db.json');
-
-export async function getDb() {
-  try {
-    const data = fs.readFileSync(DB_PATH, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error("Database unavailable:", error);
-    return { settings: { recruitmentOpen: false }, users: [] };
-  }
-}
-
-export async function saveDb(data: any) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
-}
+import { notifyRegistration, notifyAccepted } from './whatsapp';
 
 export async function getRecruitmentStatus() {
-  const db = await getDb();
-  return db.settings.recruitmentOpen;
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.from('system_settings').select('recruitment_open').eq('id', 1).single();
+    return data?.recruitment_open ?? false;
+  } catch {
+    return false;
+  }
 }
 
 export async function toggleRecruitment() {
-  const db = await getDb();
-  db.settings.recruitmentOpen = !db.settings.recruitmentOpen;
-  await saveDb(db);
+  const supabase = await createClient();
+  const current = await getRecruitmentStatus();
+  await supabase.from('system_settings').update({ recruitment_open: !current }).eq('id', 1);
   revalidatePath('/rekrutmen');
   revalidatePath('/admin/dashboard');
-  return db.settings.recruitmentOpen;
+  return !current;
 }
 
 export async function login(email: string, password: string) {
-  const db = await getDb();
-  const user = db.users.find((u: any) => u.email === email && u.password === password);
-  
-  if (user) {
-    const cookieStore = await cookies();
-    cookieStore.set('admin_session', JSON.stringify({ 
-      email: user.email, 
-      role: user.role, 
-      division: user.division, 
-      name: user.name 
-    }), { httpOnly: true, secure: process.env.NODE_ENV === 'production', path: '/' });
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    
+    if (error || !data.user) {
+      return { success: false, error: 'Kredensial tidak valid' };
+    }
     return { success: true };
+  } catch (e: any) {
+    return { success: false, error: 'Koneksi database gagal (cek URL/Key)' };
   }
-  return { success: false, error: 'Kredensial tidak valid' };
 }
 
 export async function logout() {
-  const cookieStore = await cookies();
-  cookieStore.delete('admin_session');
+  const supabase = await createClient();
+  await supabase.auth.signOut();
 }
 
 export async function getSession() {
   try {
-    const cookieStore = await cookies();
-    const session = cookieStore.get('admin_session');
-    if (!session) return null;
-    return JSON.parse(session.value);
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    
+    // Fetch Extended Profile including roles
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    if (!profile) return null;
+
+    return {
+      id: user.id,
+      email: profile.email,
+      role: profile.role,
+      division: profile.division,
+      name: profile.full_name
+    };
   } catch (e) {
     return null;
+  }
+}
+
+// === NEW RECRUITMENT FUNCTIONS ===
+
+export async function submitRegistration(formData: FormData) {
+  const fullName = formData.get('fullName') as string;
+  const email = formData.get('email') as string;
+  const phone = formData.get('phone') as string;
+  const division = formData.get('division') as string;
+  const motivation = formData.get('motivation') as string;
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from('registrations').insert({
+      full_name: fullName,
+      email,
+      phone_number: phone,
+      division_choice: division,
+      motivation
+    });
+
+    if (error) return { success: false, error: error.message };
+
+    // Fire & Forget WA Notification
+    notifyRegistration(phone, fullName, division);
+
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: 'Gagal menghubungi database' };
+  }
+}
+
+export async function getRegistrations() {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.from('registrations').select('*').order('created_at', { ascending: false });
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function updateRegistrationStatus(id: string, phone: string, name: string, division: string, status: 'accepted' | 'rejected') {
+  try {
+    const supabase = await createClient();
+    await supabase.from('registrations').update({ status }).eq('id', id);
+    
+    if (status === 'accepted') {
+      // Need to find the Ketua & Wakil profiles for this division to send their numbers via WA
+      const { data: leaders } = await supabase.from('profiles')
+        .select('role, full_name, phone_number')
+        .eq('division', division)
+        .in('role', ['Ketua Divisi', 'Wakil Ketua Divisi']);
+
+      const ketua = leaders?.find(l => l.role === 'Ketua Divisi');
+      const wakil = leaders?.find(l => l.role === 'Wakil Ketua Divisi');
+
+      if (ketua) {
+        notifyAccepted(
+          phone, 
+          name, 
+          division, 
+          ketua.full_name, 
+          ketua.phone_number || '-', 
+          wakil?.full_name || '', 
+          wakil?.phone_number || null
+        );
+      }
+    }
+
+    revalidatePath('/admin/dashboard');
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message };
   }
 }
