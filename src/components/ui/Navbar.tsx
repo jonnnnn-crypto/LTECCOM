@@ -53,10 +53,11 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between glass-panel rounded-full px-6 py-3 border border-white/10 bg-black/20 backdrop-blur-xl">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <span className="font-serif font-bold text-xl tracking-tight text-white hover:text-ltec-cyan transition-colors">
-              LTEC
-            </span>
+          <Link href="/" className="flex items-center gap-2 group z-50">
+            <div className="w-10 h-10 rounded-xl bg-ltec-cyan/10 flex items-center justify-center border border-ltec-cyan/20 group-hover:border-ltec-cyan overflow-hidden transition-colors">
+              <img src="/liwa.png" alt="LTEC" className="w-full h-full object-contain p-1" />
+            </div>
+            <span className="text-xl font-bold font-serif tracking-wider text-white">LTEC</span>
           </Link>
 
           {/* Desktop Nav */}
