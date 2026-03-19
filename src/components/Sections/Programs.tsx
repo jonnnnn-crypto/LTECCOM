@@ -1,6 +1,6 @@
-'use client';
 import { Shield, Server, Code, Network, Cloud } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 const PROGRAMS = [
   {
@@ -93,9 +93,9 @@ export default function Programs() {
             className="glass-panel p-8 rounded-[2rem] border border-ltec-cyan/30 bg-ltec-cyan/5 flex flex-col justify-center items-center text-center hover:bg-ltec-cyan/10 transition-colors"
           >
             <h3 className="text-2xl font-serif text-white mb-4">Siap Membangun Karir?</h3>
-            <button className="px-8 py-4 rounded-full bg-ltec-blue text-white font-medium hover:bg-blue-600 transition-colors shadow-lg shadow-ltec-blue/20">
+            <Link href="/rekrutmen" className="px-8 py-4 rounded-full bg-ltec-blue text-white font-medium hover:bg-blue-600 transition-colors shadow-lg shadow-ltec-blue/20">
               Daftar Program Sekarang
-            </button>
+            </Link>
           </motion.div>
         </div>
       </div>

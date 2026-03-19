@@ -1,6 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import { Calendar, Users, FileText, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Recruitment({ isOpen = false, timeline = [] }: { isOpen?: boolean, timeline?: any[] }) {
   return (
@@ -53,13 +54,21 @@ export default function Recruitment({ isOpen = false, timeline = [] }: { isOpen?
         </div>
 
         <div className="text-center">
-          <button 
-            disabled={!isOpen}
-            className={`px-10 py-5 rounded-full text-lg font-medium transition-colors shadow-[0_0_40px_rgba(99,102,241,0.3)] hover:shadow-[0_0_60px_rgba(99,102,241,0.5)] 
-              ${isOpen ? 'bg-indigo-500 text-white hover:bg-indigo-600' : 'bg-white/5 text-gray-500 border border-white/10 cursor-not-allowed shadow-none hover:shadow-none'}`}
-          >
-            {isOpen ? 'Daftar Anggota Sekarang' : 'Rekrutmen Ditutup (Coming Soon)'}
-          </button>
+          {isOpen ? (
+            <Link 
+              href="/rekrutmen"
+              className="inline-block px-10 py-5 rounded-full text-lg font-medium transition-colors shadow-[0_0_40px_rgba(99,102,241,0.3)] hover:shadow-[0_0_60px_rgba(99,102,241,0.5)] bg-indigo-500 text-white hover:bg-indigo-600"
+            >
+              Daftar Anggota Sekarang
+            </Link>
+          ) : (
+            <button 
+              disabled
+              className="px-10 py-5 rounded-full text-lg font-medium transition-colors bg-white/5 text-gray-500 border border-white/10 cursor-not-allowed shadow-none hover:shadow-none"
+            >
+              Rekrutmen Ditutup (Coming Soon)
+            </button>
+          )}
         </div>
       </div>
     </section>
