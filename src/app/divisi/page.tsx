@@ -13,7 +13,7 @@ export default async function DivisiPage() {
   return (
     <main className="min-h-screen bg-[#050505] selection:bg-ltec-cyan/30 selection:text-white">
       <Navbar />
-      <Structure profiles={profiles} />
+      <Structure profiles={profiles} divisions={divisions} />
       <DivisionRecruitment isOpen={isOpen} divisions={divisions} />
       <Footer />
     </main>

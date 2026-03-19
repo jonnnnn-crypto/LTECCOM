@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 
-export default function Structure({ profiles = [] }: { profiles?: any[] }) {
+export default function Structure({ profiles = [], divisions = [] }: { profiles?: any[], divisions?: any[] }) {
 
   const ADVISORS = useMemo(() => {
     const roles = ['Pelindung', 'Penanggung Jawab', 'Pembina'];
@@ -29,8 +29,19 @@ export default function Structure({ profiles = [] }: { profiles?: any[] }) {
   }, [profiles]);
 
   const DIVISIONS = useMemo(() => {
-    const divNames = ['Phoenix', 'SysAdmin', 'Software Dev', 'Network Cabling', 'Cloud Computing'];
-    return divNames.map(dName => {
+    // If divisions CMS data exists, use it. Otherwise fallback to these defaults.
+    const divList = divisions.length > 0 
+      ? divisions 
+      : [
+          { name: 'Phoenix (Cyber Security)' },
+          { name: 'SysAdmin (ITNSA)' },
+          { name: 'Coding & Software Dev' },
+          { name: 'Information (Network Cabling)' },
+          { name: 'Cloud Computing' }
+        ];
+
+    return divList.map(div => {
+      const dName = div.name;
       const ketua = profiles.find(x => x.division === dName && x.role === 'Ketua Divisi');
       const wakil = profiles.find(x => x.division === dName && x.role === 'Wakil Ketua Divisi');
       
@@ -39,11 +50,11 @@ export default function Structure({ profiles = [] }: { profiles?: any[] }) {
       if (wakil) members.push({ role: 'Wakil Ketua Divisi', name: wakil.full_name, img: wakil.photo_url || 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=200&auto=format&fit=crop' });
       
       return {
-        name: dName,
+        name: dName.replace(/ \(.+\)/, ''), // Strip " (Cyber Security)" to make cards cleaner
         members
       };
     });
-  }, [profiles]);
+  }, [profiles, divisions]);
   return (
     <section id="structure" className="py-32 bg-[#050505] relative z-10 overflow-hidden border-t border-white/5">
       {/* Background glow */}

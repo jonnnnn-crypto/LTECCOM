@@ -20,6 +20,9 @@ export async function toggleRecruitment() {
   const current = await getRecruitmentStatus();
   await supabase.from('system_settings').update({ recruitment_open: !current }).eq('id', 1);
   revalidatePath('/rekrutmen');
+  revalidatePath('/divisi');
+  revalidatePath('/program');
+  revalidatePath('/');
   revalidatePath('/admin/dashboard');
   return !current;
 }
