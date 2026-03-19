@@ -33,7 +33,7 @@ export default function Footer() {
           {/* Brand Info */}
           <div className="lg:col-span-4 lg:pr-12">
             <h3 className="font-serif font-bold text-3xl text-white mb-6 flex items-center gap-3">
-              <img src="/liwa.png" alt="LTEC" className="w-8 h-8 object-contain" />
+              <img src="/liwa.png" alt="LTEC" className="w-14 h-14 object-contain scale-110" />
               LTEC <span className="w-2 h-2 rounded-full bg-ltec-cyan animate-pulse mt-1" />
             </h3>
             <p className="text-gray-400 font-light leading-relaxed mb-6">
