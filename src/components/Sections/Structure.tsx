@@ -119,7 +119,7 @@ export default function Structure({ profiles = [], divisions = [] }: { profiles?
         {/* Divisions Level */}
         <div>
           <h3 className="text-center text-sm text-gray-500 font-medium mb-10 tracking-widest uppercase">Pengurus Divisi</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+          <div className="flex flex-wrap justify-center gap-6">
             {DIVISIONS.map((div, i) => (
               <motion.div 
                 key={i}
@@ -127,17 +127,17 @@ export default function Structure({ profiles = [], divisions = [] }: { profiles?
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="glass-panel p-6 md:p-8 rounded-[2rem] border border-white/10 flex flex-col h-full hover:border-ltec-cyan/30 transition-colors"
+                className="glass-panel p-6 md:p-8 rounded-[2rem] border border-white/10 flex flex-col h-full hover:border-ltec-cyan/30 transition-colors flex-1 min-w-[320px] max-w-[400px]"
               >
-                <div className="text-white font-serif text-lg mb-6 flex-grow">{div.name}</div>
+                <div className="text-white font-serif text-lg mb-6 flex-grow text-center tracking-wide">{div.name}</div>
                 <div className="space-y-4">
                   {div.members.map((member, j) => (
-                    <div key={j} className="bg-black/40 p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
-                      <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-white/10">
+                    <div key={j} className="bg-black/40 p-5 rounded-2xl border border-white/5 flex flex-col md:flex-row items-center text-center md:text-left gap-4 group">
+                      <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 border border-white/10 ring-2 ring-transparent group-hover:ring-ltec-cyan/30 transition-all">
                         <img src={member.img} alt={member.name} className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110" />
                       </div>
                       <div>
-                        <div className="text-[10px] text-ltec-cyan/70 mb-1 uppercase tracking-wider">{member.role}</div>
+                        <div className="text-[10px] text-ltec-cyan/70 mb-1 uppercase tracking-widest font-semibold">{member.role}</div>
                         <div className="text-sm font-medium text-gray-200">{member.name}</div>
                       </div>
                     </div>

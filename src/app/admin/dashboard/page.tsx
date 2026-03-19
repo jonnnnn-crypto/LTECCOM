@@ -155,7 +155,7 @@ export default function AdminDashboard() {
   const handleSaveDivision = async (id: string) => {
     setProcId(`div-${id}`);
     const divTarget = cmsForm[id];
-    const res = await saveDivisionInfo(id, { name: divTarget.name, quota: parseInt(divTarget.quota), description: divTarget.description });
+    const res = await saveDivisionInfo(id, { name: divTarget.name, quota: parseInt(divTarget.quota), description: divTarget.description, whatsapp_group_link: divTarget.whatsapp_group_link });
     if (res.success) { await loadData(); } else alert(`Gagal: ${res.error}`);
     setProcId(null);
   };
@@ -243,7 +243,7 @@ export default function AdminDashboard() {
   };
   const startEditDivisions = () => {
     const defaultForms: any = {};
-    divisions.forEach(d => { defaultForms[d.id] = { name: d.name, quota: d.quota, description: d.description }; });
+    divisions.forEach(d => { defaultForms[d.id] = { name: d.name, quota: d.quota, description: d.description, whatsapp_group_link: d.whatsapp_group_link || '' }; });
     setCmsForm(defaultForms);
     setEditingCmsId('ALL');
   };
@@ -771,6 +771,7 @@ export default function AdminDashboard() {
                            <div className="font-bold text-ltec-cyan mb-2 border-b border-ltec-cyan/30 pb-2">{div.id.toUpperCase()}</div>
                            <div><label className="text-xs text-gray-500">Nama Tampil</label><input className="w-full bg-black border border-white/10 mt-1 p-2 rounded text-white" value={cmsForm[div.id]?.name || ''} onChange={(e) => setCmsForm({...cmsForm, [div.id]: {...cmsForm[div.id], name: e.target.value}})} /></div>
                            <div><label className="text-xs text-gray-500">Kuota Limit (Angka)</label><input type="number" className="w-full bg-black border border-white/10 mt-1 p-2 rounded text-white" value={cmsForm[div.id]?.quota || 0} onChange={(e) => setCmsForm({...cmsForm, [div.id]: {...cmsForm[div.id], quota: e.target.value}})} /></div>
+                           <div><label className="text-xs text-gray-500">Link Grup WhatsApp (Akan Terkirim Saat Diterima)</label><input placeholder="https://chat.whatsapp.com/..." className="w-full bg-black border border-white/10 mt-1 p-2 rounded text-white" value={cmsForm[div.id]?.whatsapp_group_link || ''} onChange={(e) => setCmsForm({...cmsForm, [div.id]: {...cmsForm[div.id], whatsapp_group_link: e.target.value}})} /></div>
                            <div><label className="text-xs text-gray-500">Deskripsi Pendek</label><textarea className="w-full bg-black border border-white/10 mt-1 p-2 rounded text-white h-20" value={cmsForm[div.id]?.description || ''} onChange={(e) => setCmsForm({...cmsForm, [div.id]: {...cmsForm[div.id], description: e.target.value}})} /></div>
                            <button onClick={() => handleSaveDivision(div.id)} className="w-full mt-2 py-2 bg-emerald-500/20 text-emerald-400 font-semibold rounded hover:bg-emerald-500/40 border border-emerald-500/30">{procId === `div-${div.id}` ? '...' : 'Terapkan Update'}</button>
                          </div>

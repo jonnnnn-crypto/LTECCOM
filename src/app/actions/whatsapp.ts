@@ -50,7 +50,12 @@ export async function notifyInterview(phone: string, name: string, division: str
   await sendWhatsApp(phone, msg);
 }
 
-export async function notifyFinalAcceptance(phone: string, name: string, division: string) {
-  const msg = `🎉 SELAMAT ${name.toUpperCase()}! 🎉\n\nAnda resmi lulus Wawancara dan SAH menjadi anggota tetap divisi *${division}* di LIWA TECH EXCELLENT COMMUNITY.\n\nSelamat bergabung di keluarga besar kami dan mari berkarya bersama!`;
+export async function notifyFinalAcceptance(phone: string, name: string, division: string, groupLink: string | null = null) {
+  let msg = `🎉 SELAMAT ${name.toUpperCase()}! 🎉\n\nAnda resmi lulus Wawancara dan SAH menjadi anggota tetap divisi *${division}* di LIWA TECH EXCELLENT COMMUNITY.\n\nSelamat bergabung di keluarga besar kami dan mari berkarya bersama!`;
+  
+  if (groupLink && groupLink.trim() !== '') {
+    msg += `\n\nSilakan segera bergabung ke Grup WhatsApp Pembekalan Khusus Divisi melalui tautan berikut:\n${groupLink.trim()}`;
+  }
+  
   await sendWhatsApp(phone, msg);
 }

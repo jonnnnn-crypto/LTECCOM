@@ -129,11 +129,19 @@ export async function updateRegistrationStatus(id: string, phone: string, name: 
         photo_url: '' // Will be populated by the Admin later if desired
       });
 
-      // 2. Delete them from the Registration Table 
+      // 2. Fetch the Division's WhatsApp Group Link
+      const { data: divInfo } = await supabase.from('divisions_info')
+        .select('whatsapp_group_link')
+        .eq('name', division)
+        .single();
+        
+      const groupLink = divInfo?.whatsapp_group_link || null;
+
+      // 3. Delete them from the Registration Table 
       await supabase.from('registrations').delete().eq('id', id);
 
-      // 3. Send final onboarding WA
-      notifyFinalAcceptance(phone, name, division);
+      // 4. Send final onboarding WA including Group Link natively
+      notifyFinalAcceptance(phone, name, division, groupLink);
     } else {
       // Update status to 'interview' or 'rejected'
       await supabase.from('registrations').update({ status }).eq('id', id);

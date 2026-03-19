@@ -138,7 +138,7 @@ export async function getDivisionsInfo() {
   } catch { return []; }
 }
 
-export async function saveDivisionInfo(id: string, payload: { name: string, quota: number, description: string }) {
+export async function saveDivisionInfo(id: string, payload: { name: string, quota: number, description: string, whatsapp_group_link?: string }) {
   const auth = await verifyQuotaAdmin();
   if (!auth.authorized) return { success: false, error: auth.error };
 
