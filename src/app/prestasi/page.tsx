@@ -1,11 +1,16 @@
+import Navbar from '@/components/ui/Navbar';
+import Footer from '@/components/ui/Footer';
 import Achievements from '@/components/Sections/Achievements';
-import Testimonials from '@/components/Sections/Testimonials';
+import { getAchievements } from '@/app/actions/cms';
 
-export default function PrestasiPage() {
+export default async function PrestasiPage() {
+  const achievements = await getAchievements();
+
   return (
-    <main className="pt-20 lg:pt-32 min-h-screen selection:bg-ltec-cyan/30 selection:text-white overflow-hidden">
-      <Achievements />
-      <Testimonials />
+    <main className="min-h-screen bg-[#050505] selection:bg-ltec-cyan/30 selection:text-white">
+      <Navbar />
+      <Achievements achievements={achievements} />
+      <Footer />
     </main>
   );
 }

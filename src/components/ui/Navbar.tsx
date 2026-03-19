@@ -9,7 +9,7 @@ import { getSession } from '@/app/actions/admin';
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [adminSession, setAdminSession] = useState(null);
+  const [adminSession, setAdminSession] = useState<any | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {

@@ -1,11 +1,16 @@
+import Navbar from '@/components/ui/Navbar';
+import Footer from '@/components/ui/Footer';
 import Events from '@/components/Sections/Events';
-import Achievements from '@/components/Sections/Achievements';
+import { getGallery } from '@/app/actions/cms';
 
-export default function GaleriPage() {
+export default async function GaleriPage() {
+  const gallery = await getGallery();
+
   return (
-    <main className="pt-20 lg:pt-32 min-h-screen selection:bg-ltec-cyan/30 selection:text-white overflow-hidden">
-      <Events />
-      <Achievements />
+    <main className="min-h-screen bg-[#050505] selection:bg-ltec-cyan/30 selection:text-white">
+      <Navbar />
+      <Events gallery={gallery} />
+      <Footer />
     </main>
   );
 }

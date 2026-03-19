@@ -1,65 +1,86 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSession, getRecruitmentStatus, toggleRecruitment, logout, getRegistrations, updateRegistrationStatus, getProfiles, updateOwnProfile, updateProfileAdmin } from '@/app/actions/admin';
-import { Power, Settings, Users, LogOut, ShieldCheck, Check, X, Camera, Save, AlertTriangle } from 'lucide-react';
+import { 
+  getSession, getRecruitmentStatus, toggleRecruitment, logout, 
+  getRegistrations, updateRegistrationStatus, getProfiles, updateOwnProfile, updateProfileAdmin 
+} from '@/app/actions/admin';
+import { 
+  getGallery, saveGalleryItem, deleteGalleryItem,
+  getAchievements, saveAchievement, deleteAchievement,
+  getDivisionsInfo, saveDivisionInfo,
+  getTestimonials, saveTestimonial, deleteTestimonial
+} from '@/app/actions/cms';
+import { 
+  Power, Settings, Users, LogOut, ShieldCheck, Check, X,
+  AlertTriangle, Save, Image as ImageIcon, Award, Layout, MessageSquare, Menu
+} from 'lucide-react';
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'pelamar' | 'struktur' | 'galeri' | 'prestasi' | 'divisi' | 'testimoni'>('pelamar');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Data States
   const [applicants, setApplicants] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [gallery, setGallery] = useState<any[]>([]);
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [divisions, setDivisions] = useState<any[]>([]);
+  const [testimonials, setTestimonials] = useState<any[]>([]);
+
+  // Form States
   const [procId, setProcId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'pelamar' | 'struktur'>('pelamar');
   const [waInput, setWaInput] = useState('');
+  
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [profileForm, setProfileForm] = useState<any>({});
-  const router = useRouter();
 
-  useEffect(() => {
-    async function loadData() {
-      const sess = await getSession();
-      if (!sess) {
-        router.push('/admin');
-        return;
-      }
-      setSession(sess);
-      setIsOpen(await getRecruitmentStatus());
-      
-      const regs = await getRegistrations();
-      setApplicants(regs || []);
-      
-      if (sess.role === 'Ketua Umum' || sess.role === 'Wakil Ketua Umum') {
-        const profs = await getProfiles();
-        setProfiles(profs);
-      }
-      
-      setLoading(false);
+  const [editingCmsId, setEditingCmsId] = useState<string | null>(null);
+  const [cmsForm, setCmsForm] = useState<any>({});
+
+  const loadData = async () => {
+    const sess = await getSession();
+    if (!sess) {
+      router.push('/admin');
+      return;
     }
-    loadData();
-  }, [router]);
+    setSession(sess);
+    setIsOpen(await getRecruitmentStatus());
+    setApplicants(await getRegistrations() || []);
 
-  const handleToggle = async () => {
-    const newState = await toggleRecruitment();
-    setIsOpen(newState);
+    if (sess.role === 'Ketua Umum' || sess.role === 'Wakil Ketua Umum') {
+      setProfiles(await getProfiles() || []);
+      setGallery(await getGallery() || []);
+      setAchievements(await getAchievements() || []);
+      setDivisions(await getDivisionsInfo() || []);
+      setTestimonials(await getTestimonials() || []);
+    }
+    setLoading(false);
   };
 
-  const handleStatusChange = async (id: string, phone: string, name: string, division: string, status: 'accepted' | 'rejected') => {
-    if (!confirm(`Tandai pelamar ini sebagai ${status}?`)) return;
-    setProcId(id);
-    const res = await updateRegistrationStatus(id, phone, name, division, status);
-    if (res.success) {
-      setApplicants(prev => prev.map(a => a.id === id ? { ...a, status } : a));
-    } else {
-      alert(`Gagal: ${res.error}`);
-    }
+  useEffect(() => { loadData(); }, []);
+
+  const handleLogout = async () => { await logout(); router.push('/admin'); };
+
+  const handleToggleRecruitment = async () => {
+    if (!confirm('Ubah status pendaftaran?')) return;
+    setProcId('toggle_rec');
+    const n = await toggleRecruitment();
+    setIsOpen(n);
     setProcId(null);
   };
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/admin');
+  const processRegistration = async (id: string, phone: string, name: string, div: string, status: 'accepted' | 'rejected') => {
+    if (!confirm(`Tandai pelamar sebagai ${status}?`)) return;
+    setProcId(id);
+    const res = await updateRegistrationStatus(id, phone, name, div, status);
+    if (!res?.success) alert('Gagal memproses pelamar.');
+    await loadData();
+    setProcId(null);
   };
 
   const handleUpdateWA = async (e: React.FormEvent) => {
@@ -70,35 +91,98 @@ export default function AdminDashboard() {
     if (res.success) {
       setSession({ ...session, phone_number: waInput });
       alert("Nomor WA berhasil disimpan!");
-    } else {
-      alert(`Gagal menyimpan: ${res.error}`);
-    }
+    } else alert(`Gagal: ${res.error}`);
     setProcId(null);
   };
 
-  const startEditProfile = (p: any) => {
-    setEditingProfileId(p.id);
-    setProfileForm({ full_name: p.full_name, phone_number: p.phone_number, photo_url: p.photo_url || '' });
-  };
-
+  // Generic Save Handlers
   const handleSaveProfile = async (id: string) => {
     setProcId(id);
     const res = await updateProfileAdmin(id, profileForm);
     if (res.success) {
       setProfiles(prev => prev.map(x => x.id === id ? { ...x, ...profileForm } : x));
       setEditingProfileId(null);
-    } else {
-      alert(`Gagal update: ${res.error}`);
-    }
+    } else alert(`Gagal: ${res.error}`);
     setProcId(null);
   };
 
-  if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white">Memuat...</div>;
+  const handleSaveGallery = async () => {
+    setProcId('save_gallery');
+    const res = await saveGalleryItem(editingCmsId === 'NEW' ? null : editingCmsId, cmsForm);
+    if (res.success) { setEditingCmsId(null); await loadData(); } else alert(`Gagal: ${res.error}`);
+    setProcId(null);
+  };
+
+  const handleDeleteGallery = async (id: string) => {
+    if (!confirm('Hapus item galeri ini?')) return;
+    setProcId(id);
+    await deleteGalleryItem(id);
+    await loadData();
+    setProcId(null);
+  };
+
+  const handleSaveAchievement = async () => {
+    setProcId('save_ach');
+    const res = await saveAchievement(editingCmsId === 'NEW' ? null : editingCmsId, cmsForm);
+    if (res.success) { setEditingCmsId(null); await loadData(); } else alert(`Gagal: ${res.error}`);
+    setProcId(null);
+  };
+
+  const handleDeleteAchievement = async (id: string) => {
+    if (!confirm('Hapus rincian prestasi ini?')) return;
+    setProcId(id);
+    await deleteAchievement(id);
+    await loadData();
+    setProcId(null);
+  };
+
+  const handleSaveDivision = async (id: string) => {
+    setProcId(`div-${id}`);
+    const divTarget = cmsForm[id];
+    const res = await saveDivisionInfo(id, { name: divTarget.name, quota: parseInt(divTarget.quota), description: divTarget.description });
+    if (res.success) { setEditingCmsId(null); await loadData(); } else alert(`Gagal: ${res.error}`);
+    setProcId(null);
+  };
+
+  const handleSaveTestimonial = async () => {
+    setProcId('save_testi');
+    const res = await saveTestimonial(editingCmsId === 'NEW' ? null : editingCmsId, cmsForm);
+    if (res.success) { setEditingCmsId(null); await loadData(); } else alert(`Gagal: ${res.error}`);
+    setProcId(null);
+  };
+
+  const handleDeleteTestimonial = async (id: string) => {
+    if (!confirm('Hapus testimoni ini?')) return;
+    setProcId(id);
+    await deleteTestimonial(id);
+    await loadData();
+    setProcId(null);
+  };
+
+  // Start edit helpers
+  const startEditGallery = (item?: any) => {
+    if (item) { setEditingCmsId(item.id); setCmsForm(item); }
+    else { setEditingCmsId('NEW'); setCmsForm({ title: '', category: '', image_url: '' }); }
+  };
+  const startEditAchievement = (item?: any) => {
+    if (item) { setEditingCmsId(item.id); setCmsForm(item); }
+    else { setEditingCmsId('NEW'); setCmsForm({ title: '', date: '', description: '', image_url: '' }); }
+  };
+  const startEditTestimonial = (item?: any) => {
+    if (item) { setEditingCmsId(item.id); setCmsForm(item); }
+    else { setEditingCmsId('NEW'); setCmsForm({ name: '', role: '', content: '', image_url: '' }); }
+  };
+  const startEditDivisions = () => {
+    const defaultForms: any = {};
+    divisions.forEach(d => { defaultForms[d.id] = { name: d.name, quota: d.quota, description: d.description }; });
+    setCmsForm(defaultForms);
+    setEditingCmsId('ALL');
+  };
+
+  if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-ltec-cyan">Memuat Integrasi CMS...</div>;
 
   const isAdmin = session?.role === 'Ketua Umum' || session?.role === 'Wakil Ketua Umum';
   const isDivisionLeader = session?.role === 'Ketua Divisi' || session?.role === 'Wakil Ketua Divisi';
-  
-  // MANDATORY WA GATE
   const needsWAUpdate = isDivisionLeader && (!session?.phone_number || session?.phone_number.includes('08123456789'));
 
   if (needsWAUpdate) {
@@ -107,240 +191,364 @@ export default function AdminDashboard() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-red-500/10 blur-[120px] pointer-events-none rounded-full" />
         <div className="glass-panel max-w-lg w-full p-10 rounded-[2.5rem] border border-red-500/20 text-center relative z-10 box-glow-red">
           <AlertTriangle size={48} className="mx-auto text-red-400 mb-6" />
-          <h2 className="text-2xl font-serif text-white mb-2">Pemberitahuan Sistem</h2>
-          <p className="text-gray-400 text-sm mb-8">
-            Sebagai pimpinan divisi, Anda *diwajibkan* untuk mengisi Nomor WhatsApp aktif. Sistem akan secara otomatis memberikan nomor Anda kepada para pelamar yang <span className="text-emerald-400">Diterima</span> agar mereka dapat menghubungi Anda!
-          </p>
+          <h2 className="text-2xl font-serif text-white mb-2">Konfigurasi Wajib WhatsApp</h2>
+          <p className="text-gray-400 text-sm mb-8">Sebagai Kepala Divisi, pengisian Nomor WhatsApp aktif diwajibkan untuk menjamin jalannya layanan notifikasi API otomastis kita terhadap pendaftar baru.</p>
           <form onSubmit={handleUpdateWA} className="space-y-4">
-            <input 
-              type="tel" required
-              value={waInput} onChange={e => setWaInput(e.target.value)}
-              placeholder="Contoh: 08123456xxxx"
-              className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-center focus:border-red-400 focus:outline-none"
-            />
-            <button 
-              type="submit" disabled={procId === 'wa_update'}
-              className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(239,68,68,0.3)] disabled:opacity-50"
-            >
-              {procId === 'wa_update' ? 'Menyimpan...' : 'Simpan Nomor WA'}
-            </button>
+            <input type="tel" required value={waInput} onChange={e => setWaInput(e.target.value)} placeholder="08123xxxx" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-red-400 outline-none" />
+            <button type="submit" disabled={procId === 'wa_update'} className="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl disabled:opacity-50 transition">{procId ? '...' : 'Sahkan Nomor'}</button>
           </form>
-          <button onClick={handleLogout} className="mt-6 text-gray-500 hover:text-white text-sm">Logout / Kembali</button>
+          <button onClick={handleLogout} className="mt-6 text-gray-500 hover:text-white text-sm">Kembali / Logout</button>
         </div>
       </main>
     );
   }
 
+  const TABS = [
+    { id: 'pelamar', label: 'Pelamar', icon: Users, adminOnly: false },
+    { id: 'struktur', label: 'Struktur Pengurus', icon: ShieldCheck, adminOnly: true },
+    { id: 'galeri', label: 'Galeri Publik', icon: ImageIcon, adminOnly: true },
+    { id: 'prestasi', label: 'Prestasi', icon: Award, adminOnly: true },
+    { id: 'divisi', label: 'Divisi & Kuota', icon: Layout, adminOnly: true },
+    { id: 'testimoni', label: 'Testimoni', icon: MessageSquare, adminOnly: true },
+  ];
+
   return (
-    <main className="min-h-screen pt-32 pb-20 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
-          <div>
-            <h1 className="text-4xl font-serif text-white mb-2">Dashboard Eksekutif</h1>
-            <p className="text-gray-400">Selamat datang, {session.name}. Anda login sebagai <span className="text-ltec-cyan">{session.role} ({session.division})</span>.</p>
+    <div className="min-h-screen bg-[#050505] flex flex-col md:flex-row font-sans text-gray-100 selection:bg-ltec-cyan/30">
+      
+      {/* Mobile Topbar */}
+      <div className="md:hidden flex items-center justify-between p-4 border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50">
+        <div className="font-serif font-bold text-lg text-white">LTEC CMS</div>
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 bg-white/5 rounded-lg text-white">
+          <Menu size={24} />
+        </button>
+      </div>
+
+      {/* Sidebar */}
+      <aside className={`w-full md:w-64 flex flex-col bg-black/40 border-r border-white/5 md:flex md:sticky md:top-0 h-auto md:h-screen z-40 ${sidebarOpen ? 'block fixed inset-0 top-[69px]' : 'hidden md:flex'}`}>
+        <div className="p-6">
+          <h2 className="text-2xl font-serif text-white hidden md:block">LTEC <span className="text-ltec-cyan">Admin</span></h2>
+          <div className="mt-6 p-4 rounded-2xl bg-white/5 border border-white/10">
+            <p className="text-sm text-gray-400 mb-1">Login Aktif:</p>
+            <p className="text-white font-medium truncate">{session?.name}</p>
+            <p className="text-ltec-cyan text-xs font-semibold tracking-wider uppercase mt-1">{session?.role}</p>
           </div>
-          <button onClick={handleLogout} className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors text-sm">
-            <LogOut size={16} /> Keluar Sistem
+        </div>
+
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
+          {TABS.map(tab => {
+            if (tab.adminOnly && !isAdmin) return null;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id as any); setEditingCmsId(null); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm
+                  ${activeTab === tab.id ? 'bg-ltec-cyan/10 text-ltec-cyan border border-ltec-cyan/20' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+              >
+                <tab.icon size={18} /> {tab.label}
+              </button>
+            )
+          })}
+        </nav>
+
+        <div className="p-6 mt-auto">
+          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-colors font-medium">
+            <LogOut size={16} /> Keluar
           </button>
         </div>
+      </aside>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Recruitment Toggle Module (Admins only) */}
-          <div className="glass-panel p-8 rounded-3xl border border-white/10 col-span-1 md:col-span-2 relative overflow-hidden">
-            <div className="flex items-center gap-3 mb-8">
-              <Settings className="text-ltec-blue" size={24} />
-              <h2 className="text-2xl font-serif text-white">Status Rekrutmen Global</h2>
-            </div>
-            
-            <div className={`p-8 rounded-2xl border flex flex-col md:flex-row items-center justify-between gap-6 transition-all ${isOpen ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
-              <div>
-                <h3 className={`text-xl font-medium mb-1 ${isOpen ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {isOpen ? 'Rekrutmen Sedang DIBUKA' : 'Rekrutmen DITUTUP (Coming Soon)'}
-                </h3>
-                <p className="text-sm text-gray-400">
-                  {isOpen ? 'Calon anggota saat ini dapat mengisi formulir dan mendaftar di semua divisi.' : 'Seluruh formulir pendaftaran dialihkan ke status coming soon.'}
-                </p>
-              </div>
-              
-              <button 
-                onClick={handleToggle}
-                disabled={!isAdmin}
-                className={`flex items-center gap-2 px-6 py-4 rounded-xl font-medium transition-all ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'} ${isOpen ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'}`}
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 lg:p-12 overflow-y-auto w-full relative">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-ltec-cyan/5 blur-[150px] pointer-events-none rounded-full" />
+        
+        {/* Dynamic Header based on Role */}
+        {isAdmin && activeTab === 'pelamar' && (
+           <div className="mb-10 p-6 md:p-8 rounded-[2rem] border border-ltec-cyan/20 bg-gradient-to-r from-ltec-cyan/5 to-transparent flex flex-col md:flex-row justify-between items-center gap-6">
+             <div>
+               <h1 className="text-3xl font-serif text-white mb-2">Sistem Rekrutmen Utama</h1>
+               <p className="text-gray-400 text-sm">Kendalikan arus pendaftaran terbuka dan akses pantau keseluruhan peminat LTEC.</p>
+             </div>
+             <button
+                onClick={handleToggleRecruitment}
+                disabled={procId === 'toggle_rec'}
+                className={`flex items-center gap-3 px-6 py-4 rounded-xl font-medium transition-all shadow-lg
+                  ${isOpen ? 'bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/30' : 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/50 hover:bg-emerald-500/30'}`}
               >
-                <Power size={20} />
-                {isOpen ? 'Tutup Pendaftaran' : 'Buka Pendaftaran'}
+                <Power size={20} /> {procId === 'toggle_rec' ? 'Memproses...' : (isOpen ? 'TUTUP Pendaftaran' : 'BUKA Pendaftaran')}
               </button>
-            </div>
-            {!isAdmin && (
-              <p className="text-xs text-red-400 mt-4 flex items-center gap-2">
-                <ShieldCheck size={14} /> Hanya Ketua Umum dan Wakil yang dapat mengubah status ini.
-              </p>
-            )}
-          </div>
-
-          {/* User Module */}
-          <div className="glass-panel p-8 rounded-3xl border border-white/10 flex flex-col">
-            <div className="flex items-center gap-3 mb-6">
-              <Users className="text-ltec-cyan" size={24} />
-              <h2 className="text-xl font-serif text-white">Divisi Anda</h2>
-            </div>
-            <div className="bg-black/30 flex-grow rounded-2xl p-6 border border-white/5 flex flex-col items-center justify-center text-center">
-              <div className="w-20 h-20 rounded-full border-2 border-ltec-cyan/30 mb-4 bg-gray-800 flex items-center justify-center text-ltec-cyan text-2xl font-bold">
-                {session.division.charAt(0)}
-              </div>
-              <h3 className="text-xl font-medium text-white mb-1">{session.division}</h3>
-              <p className="text-gray-400 text-sm">Sebagai {session.role}, Anda mengendalikan penyaringan berkas divisi ini.</p>
-            </div>
-            <button className="w-full mt-4 py-3 rounded-xl border border-white/10 text-gray-300 transition-colors text-sm cursor-default">
-              Status Online
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Switcher for Admins */}
-        {isAdmin && (
-          <div className="flex gap-4 mt-8 mb-4">
-            <button 
-              onClick={() => setActiveTab('pelamar')}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === 'pelamar' ? 'bg-ltec-cyan text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
-            >
-              Manajemen Pelamar
-            </button>
-            <button 
-              onClick={() => setActiveTab('struktur')}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === 'struktur' ? 'bg-ltec-cyan text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
-            >
-              Manajemen Struktur & Foto
-            </button>
-          </div>
+           </div>
         )}
 
-        {/* Tab: Pelamar (Default) */}
-        {activeTab === 'pelamar' && (
-          <div className="glass-panel p-8 rounded-3xl border border-white/10 mt-6 relative overflow-x-auto min-h-[400px]">
-            <h2 className="text-2xl font-serif text-white mb-6">Database Pelamar {isAdmin ? 'Global' : 'Divisi'}</h2>
+        <div className="relative z-10 glass-panel min-h-[500px] rounded-3xl border border-white/10 p-6 md:p-8 shadow-2xl">
           
-          {applicants.length === 0 ? (
-            <div className="text-center py-20 text-gray-500">Belum ada pelamar.</div>
-          ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/10 text-gray-400 text-sm tracking-wider uppercase">
-                  <th className="p-4 font-medium">Nama / Email</th>
-                  <th className="p-4 font-medium">Divisi Opsi</th>
-                  <th className="p-4 font-medium">No. WA</th>
-                  <th className="p-4 font-medium">Status</th>
-                  <th className="p-4 font-medium text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {applicants.map((app) => (
-                  <tr key={app.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="p-4">
-                      <p className="text-white font-medium">{app.full_name}</p>
-                      <p className="text-xs text-gray-500">{app.email}</p>
-                    </td>
-                    <td className="p-4 text-sm text-ltec-cyan">{app.division_choice}</td>
-                    <td className="p-4 text-sm text-gray-300">{app.phone_number}</td>
-                    <td className="p-4">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-widest ${
-                        app.status === 'accepted' ? 'bg-emerald-500/20 text-emerald-400' : 
-                        app.status === 'rejected' ? 'bg-red-500/20 text-red-500' : 'bg-gray-500/20 text-gray-400'
-                      }`}>
-                        {app.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      {app.status === 'pending' && (
-                        <div className="flex justify-end gap-2">
-                          <button 
-                            disabled={procId === app.id}
-                            onClick={() => handleStatusChange(app.id, app.phone_number, app.full_name, app.division_choice, 'accepted')}
-                            className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/40 transition disabled:opacity-50"
-                            title="Terima"
-                          >
-                            <Check size={18} />
-                          </button>
-                          <button 
-                            disabled={procId === app.id}
-                            onClick={() => handleStatusChange(app.id, app.phone_number, app.full_name, app.division_choice, 'rejected')}
-                            className="p-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500/40 transition disabled:opacity-50"
-                            title="Tolak"
-                          >
-                            <X size={18} />
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* TAB: PELAMAR */}
+          {activeTab === 'pelamar' && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                 <h2 className="text-2xl font-serif text-white">Database Pelamar {isAdmin ? 'Global' : 'Divisi'}</h2>
+                 <span className="text-gray-400 text-sm">{applicants.length} Total</span>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[800px] text-left">
+                  <thead>
+                    <tr className="border-b border-white/10 text-gray-500 text-sm">
+                      <th className="p-4">Calon</th>
+                      <th className="p-4">Kontak</th>
+                      {!isAdmin && <th className="p-4">Pilihan Divisi</th>}
+                      {isAdmin && <th className="p-4">Pilihan Divisi</th>}
+                      <th className="p-4">Alasan Bergabung</th>
+                      <th className="p-4 text-center">Tindakan Keputusan</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {applicants.map(app => (
+                      <tr key={app.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
+                        <td className="p-4 text-white font-medium">{app.full_name}</td>
+                        <td className="p-4 text-gray-400 text-sm">{app.phone_number}<br/>{app.email}</td>
+                        <td className="p-4 text-ltec-cyan text-sm">{app.division_choice}</td>
+                        <td className="p-4 text-gray-400 text-sm max-w-xs truncate">{app.motivation}</td>
+                        <td className="p-4">
+                          {app.status === 'pending' ? (
+                            <div className="flex justify-center gap-2">
+                              <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'accepted')} className="px-4 py-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/40 rounded-lg text-xs font-semibold border border-emerald-500/30 transition shadow-lg flex items-center gap-1"><Check size={14}/> TERIMA</button>
+                              <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'rejected')} className="px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500/40 rounded-lg text-xs font-semibold border border-red-500/30 transition shadow-lg flex items-center gap-1"><X size={14}/> TOLAK</button>
+                            </div>
+                          ) : (
+                            <div className="text-center font-bold tracking-widest text-xs">
+                              {app.status === 'accepted' ? <span className="text-emerald-500 px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">DITERIMA</span> : <span className="text-red-500 px-3 py-1 bg-red-500/10 rounded-full border border-red-500/20">DITOLAK</span>}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {applicants.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-gray-500 italic">Belum ada data pelamar.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
-        </div>
-      )}
 
-      {/* Tab: Struktur (Admin Only) */}
-      {isAdmin && activeTab === 'struktur' && (
-        <div className="glass-panel p-8 rounded-3xl border border-white/10 mt-6 relative overflow-x-auto min-h-[400px] box-glow">
-          <h2 className="text-2xl font-serif text-white mb-2">Manajemen Profil Ekspos</h2>
-          <p className="text-gray-400 text-sm mb-6">Perbarui Nama, URL Foto, dan Nomor Kontak para pimpinan untuk menyesuaikan tampilan di halaman Struktur Organisasi.</p>
-          
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead>
-              <tr className="border-b border-white/10 text-gray-400 text-sm tracking-wider uppercase">
-                <th className="p-4 font-medium w-64">Nama Lengkap & Posisi</th>
-                <th className="p-4 font-medium">No. WhatsApp</th>
-                <th className="p-4 font-medium">Link Foto URL (Unsplash/ImgBB)</th>
-                <th className="p-4 font-medium text-right w-24">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {profiles.map(p => (
-                <tr key={p.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                  {editingProfileId === p.id ? (
-                    <>
-                      <td className="p-4">
-                        <input className="w-full bg-black/50 border border-white/10 p-2 text-white rounded focus:border-ltec-cyan outline-none" value={profileForm.full_name} onChange={e => setProfileForm({...profileForm, full_name: e.target.value})} placeholder="Nama..." />
-                        <div className="text-xs text-gray-500 mt-1">{p.role} - {p.division}</div>
-                      </td>
-                      <td className="p-4">
-                         <input className="w-full bg-black/50 border border-white/10 p-2 text-white rounded focus:border-ltec-cyan outline-none" value={profileForm.phone_number} onChange={e => setProfileForm({...profileForm, phone_number: e.target.value})} placeholder="08..." />
-                      </td>
-                      <td className="p-4">
-                         <input className="w-full bg-black/50 border border-white/10 p-2 text-white rounded focus:border-ltec-cyan outline-none" value={profileForm.photo_url} onChange={e => setProfileForm({...profileForm, photo_url: e.target.value})} placeholder="https://..." />
-                      </td>
-                      <td className="p-4 text-right flex gap-2 justify-end">
-                        <button disabled={procId === p.id} onClick={() => handleSaveProfile(p.id)} className="p-2 bg-emerald-500/20 text-emerald-400 rounded hover:bg-emerald-500/40"><Save size={16}/></button>
-                        <button disabled={procId === p.id} onClick={() => setEditingProfileId(null)} className="p-2 bg-red-500/20 text-red-400 rounded hover:bg-red-500/40"><X size={16}/></button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="p-4">
-                        <p className="text-white font-medium">{p.full_name}</p>
-                        <p className="text-xs text-gray-500">{p.role} - {p.division}</p>
-                      </td>
-                      <td className="p-4 text-sm text-gray-300">{p.phone_number}</td>
-                      <td className="p-4 text-sm text-gray-400 truncate max-w-[200px]">
-                        {p.photo_url ? (
-                          <a href={p.photo_url} target="_blank" className="text-blue-400 hover:underline">View Photo</a>
-                        ) : 'Kosong'}
-                      </td>
-                      <td className="p-4 text-right">
-                        <button onClick={() => startEditProfile(p)} className="px-3 py-1.5 bg-white/5 border border-white/10 text-gray-300 hover:text-white rounded hover:bg-white/10 text-xs flex items-center gap-2 transition">
-                          <Settings size={14} /> Edit
-                        </button>
-                      </td>
-                    </>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {/* TAB: STRUKTUR PENGURUS */}
+          {activeTab === 'struktur' && isAdmin && (
+            <div>
+              <h2 className="text-2xl font-serif text-white mb-2">Manajemen Profil Ekspos</h2>
+              <p className="text-gray-400 text-sm mb-6">Perbarui Nama, URL Foto, dan Nomor Kontak para pimpinan. Semua profil yang aktif akan ditampilkan otomatis di halaman Divisi.</p>
+              
+              <table className="w-full text-left border-collapse min-w-[800px] overflow-x-auto block">
+                <thead>
+                  <tr className="border-b border-white/10 text-gray-400 text-sm tracking-wider uppercase">
+                    <th className="p-4 font-medium w-64">Nama & Posisi</th>
+                    <th className="p-4 font-medium">WhatsApp</th>
+                    <th className="p-4 font-medium">Link Foto URL</th>
+                    <th className="p-4 font-medium text-right w-24">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="w-full">
+                  {profiles.map(p => (
+                    <tr key={p.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      {editingProfileId === p.id ? (
+                        <>
+                          <td className="p-4">
+                            <input className="w-full bg-black/50 border border-white/10 p-2 text-white rounded outline-none" value={profileForm.full_name} onChange={e => setProfileForm({...profileForm, full_name: e.target.value})} />
+                            <div className="text-xs text-ltec-cyan mt-1">{p.role} - {p.division}</div>
+                          </td>
+                          <td className="p-4"><input className="w-full bg-black/50 border border-white/10 p-2 text-white rounded outline-none" value={profileForm.phone_number} onChange={e => setProfileForm({...profileForm, phone_number: e.target.value})} /></td>
+                          <td className="p-4"><input className="w-full bg-black/50 border border-white/10 p-2 text-white rounded outline-none" value={profileForm.photo_url} onChange={e => setProfileForm({...profileForm, photo_url: e.target.value})} /></td>
+                          <td className="p-4 text-right flex gap-2 justify-end">
+                            <button onClick={() => handleSaveProfile(p.id)} className="p-2 bg-emerald-500/20 text-emerald-400 rounded"><Save size={16}/></button>
+                            <button onClick={() => setEditingProfileId(null)} className="p-2 bg-white/10 text-white rounded"><X size={16}/></button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="p-4"><p className="text-white font-medium">{p.full_name}</p><p className="text-xs text-ltec-cyan">{p.role} - {p.division}</p></td>
+                          <td className="p-4 text-sm text-gray-300">{p.phone_number || '-'}</td>
+                          <td className="p-4 text-sm text-gray-400 truncate max-w-[200px]">{p.photo_url ? 'Link Aktif' : 'Kosong'}</td>
+                          <td className="p-4 text-right">
+                            <button onClick={() => { setEditingProfileId(p.id); setProfileForm({ full_name: p.full_name, phone_number: p.phone_number || '', photo_url: p.photo_url || '' }); }} className="px-3 py-1.5 bg-white/5 border border-white/10 text-gray-300 hover:text-white rounded text-xs flex items-center gap-2"><Settings size={14}/> Edit</button>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* TAB: GALERI */}
+          {activeTab === 'galeri' && isAdmin && (
+            <div>
+               <div className="flex justify-between items-center mb-6">
+                 <h2 className="text-2xl font-serif text-white">Manajemen Galeri Publik</h2>
+                 <button onClick={() => startEditGallery()} className="px-4 py-2 bg-ltec-cyan text-black font-semibold rounded-lg text-sm hover:opacity-80">+ Tambah Foto</button>
+               </div>
+               
+               {editingCmsId && (
+                 <div className="bg-white/5 p-6 rounded-2xl border border-ltec-cyan/30 mb-8">
+                   <h3 className="text-lg text-white mb-4">{editingCmsId === 'NEW' ? 'Tambah Item Baru' : 'Edit Item'}</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                     <input placeholder="Judul / Deskripsi Pendek" value={cmsForm.title} onChange={e => setCmsForm({...cmsForm, title: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white" />
+                     <input placeholder="Kategori (Kunjungan, Prestasi, Latihan)" value={cmsForm.category} onChange={e => setCmsForm({...cmsForm, category: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white" />
+                     <input placeholder="Image URL (Wajib)" value={cmsForm.image_url} onChange={e => setCmsForm({...cmsForm, image_url: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2" />
+                   </div>
+                   <div className="flex justify-end gap-3">
+                     <button onClick={() => setEditingCmsId(null)} className="px-4 py-2 text-gray-400 hover:text-white">Batal</button>
+                     <button onClick={handleSaveGallery} className="px-4 py-2 bg-ltec-cyan text-black rounded-lg font-medium">{procId ? 'Menyimpan...' : 'Simpan'}</button>
+                   </div>
+                 </div>
+               )}
+
+               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                 {gallery.map(item => (
+                   <div key={item.id} className="bg-white/5 rounded-2xl overflow-hidden border border-white/10 group">
+                     <div className="h-40 bg-black overflow-hidden"><img src={item.image_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition" alt="Galeri" /></div>
+                     <div className="p-4">
+                       <p className="text-xs text-ltec-cyan mb-1">{item.category}</p>
+                       <p className="font-medium text-white mb-4 line-clamp-1">{item.title}</p>
+                       <div className="flex gap-2">
+                         <button onClick={() => startEditGallery(item)} className="px-3 py-1 bg-white/10 rounded flex-1 text-xs hover:bg-white/20">Edit</button>
+                         <button onClick={() => handleDeleteGallery(item.id)} className="px-3 py-1 bg-red-500/20 text-red-500 rounded flex-1 text-xs hover:bg-red-500/40">Hapus</button>
+                       </div>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+            </div>
+          )}
+
+          {/* TAB: PRESTASI */}
+          {activeTab === 'prestasi' && isAdmin && (
+             <div>
+               <div className="flex justify-between items-center mb-6">
+                 <h2 className="text-2xl font-serif text-white">Pajangan Prestasi</h2>
+                 <button onClick={() => startEditAchievement()} className="px-4 py-2 bg-ltec-cyan text-black font-semibold rounded-lg text-sm hover:opacity-80">+ Tambah Prestasi</button>
+               </div>
+               
+               {editingCmsId && (
+                 <div className="bg-white/5 p-6 rounded-2xl border border-ltec-cyan/30 mb-8">
+                   <h3 className="text-lg text-white mb-4">{editingCmsId === 'NEW' ? 'Tambah Prestasi Baru' : 'Edit Prestasi'}</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                     <input placeholder="Judul Prestasi Lomba" value={cmsForm.title} onChange={e => setCmsForm({...cmsForm, title: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white" />
+                     <input placeholder="Tanggal (cth. Aug 2024)" value={cmsForm.date} onChange={e => setCmsForm({...cmsForm, date: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white" />
+                     <textarea placeholder="Deskripsi pendek" value={cmsForm.description} onChange={e => setCmsForm({...cmsForm, description: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2 h-24" />
+                     <input placeholder="Image URL (Opsional / Gambar Trofi)" value={cmsForm.image_url} onChange={e => setCmsForm({...cmsForm, image_url: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2" />
+                   </div>
+                   <div className="flex justify-end gap-3">
+                     <button onClick={() => setEditingCmsId(null)} className="px-4 py-2 text-gray-400 hover:text-white">Batal</button>
+                     <button onClick={handleSaveAchievement} className="px-4 py-2 bg-ltec-cyan text-black rounded-lg font-medium">{procId ? 'Menyimpan...' : 'Simpan'}</button>
+                   </div>
+                 </div>
+               )}
+
+               <div className="space-y-4">
+                 {achievements.map(item => (
+                   <div key={item.id} className="p-4 bg-white/5 rounded-xl border border-white/10 flex justify-between items-center gap-4">
+                     <div className="flex-1">
+                       <h4 className="text-white font-medium">{item.title}</h4>
+                       <p className="text-sm text-gray-400 mb-1">{item.date}</p>
+                       <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                     </div>
+                     <div className="flex gap-2">
+                       <button onClick={() => startEditAchievement(item)} className="p-2 bg-white/10 hover:bg-white/20 rounded"><Settings size={18}/></button>
+                       <button onClick={() => handleDeleteAchievement(item.id)} className="p-2 bg-red-500/10 text-red-500 hover:bg-red-500/30 rounded"><X size={18}/></button>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             </div>
+          )}
+
+          {/* TAB: DIVISI */}
+          {activeTab === 'divisi' && isAdmin && (
+             <div>
+               <div className="flex justify-between items-center mb-6">
+                 <div>
+                   <h2 className="text-2xl font-serif text-white">Deskripsi & Kuota Divisi</h2>
+                   <p className="text-sm text-gray-400 mt-1">Konfigurasi batasan kuota pendaftaran yang tertera di Halaman Panduan Pendaftaran.</p>
+                 </div>
+                 {editingCmsId !== 'ALL' && <button onClick={() => startEditDivisions()} className="px-4 py-2 bg-ltec-cyan text-black font-semibold rounded-lg text-sm hover:opacity-80">Edit Seluruh Kuota</button>}
+                 {editingCmsId === 'ALL' && <button onClick={() => { setEditingCmsId(null); loadData(); }} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm">Batal Edit</button>}
+               </div>
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 {divisions.map(div => {
+                   const isEditing = editingCmsId === 'ALL';
+                   return (
+                     <div key={div.id} className="p-6 bg-white/5 border border-white/10 rounded-2xl relative">
+                       {isEditing ? (
+                         <div className="space-y-3">
+                           <div className="font-bold text-ltec-cyan mb-2 border-b border-ltec-cyan/30 pb-2">{div.id.toUpperCase()}</div>
+                           <div><label className="text-xs text-gray-500">Nama Tampil</label><input className="w-full bg-black border border-white/10 mt-1 p-2 rounded text-white" value={cmsForm[div.id]?.name || ''} onChange={(e) => setCmsForm({...cmsForm, [div.id]: {...cmsForm[div.id], name: e.target.value}})} /></div>
+                           <div><label className="text-xs text-gray-500">Kuota Limit (Angka)</label><input type="number" className="w-full bg-black border border-white/10 mt-1 p-2 rounded text-white" value={cmsForm[div.id]?.quota || 0} onChange={(e) => setCmsForm({...cmsForm, [div.id]: {...cmsForm[div.id], quota: e.target.value}})} /></div>
+                           <div><label className="text-xs text-gray-500">Deskripsi Pendek</label><textarea className="w-full bg-black border border-white/10 mt-1 p-2 rounded text-white h-20" value={cmsForm[div.id]?.description || ''} onChange={(e) => setCmsForm({...cmsForm, [div.id]: {...cmsForm[div.id], description: e.target.value}})} /></div>
+                           <button onClick={() => handleSaveDivision(div.id)} className="w-full mt-2 py-2 bg-emerald-500/20 text-emerald-400 font-semibold rounded hover:bg-emerald-500/40 border border-emerald-500/30">{procId === `div-${div.id}` ? '...' : 'Terapkan Update'}</button>
+                         </div>
+                       ) : (
+                         <>
+                           <h4 className="font-serif text-lg text-white mb-1">{div.name}</h4>
+                           <p className="text-2xl font-bold text-ltec-cyan mb-3">{div.quota} Kuota Tersedia</p>
+                           <p className="text-sm text-gray-400">{div.description}</p>
+                         </>
+                       )}
+                     </div>
+                   )
+                 })}
+               </div>
+             </div>
+          )}
+
+          {/* TAB: TESTIMONI */}
+          {activeTab === 'testimoni' && isAdmin && (
+             <div>
+               <div className="flex justify-between items-center mb-6">
+                 <h2 className="text-2xl font-serif text-white">Manajemen Testimoni</h2>
+                 <button onClick={() => startEditTestimonial()} className="px-4 py-2 bg-ltec-cyan text-black font-semibold rounded-lg text-sm hover:opacity-80">+ Tambah Testimoni</button>
+               </div>
+               
+               {editingCmsId && (
+                 <div className="bg-white/5 p-6 rounded-2xl border border-ltec-cyan/30 mb-8">
+                   <h3 className="text-lg text-white mb-4">{editingCmsId === 'NEW' ? 'Tambah Testimoni Baru' : 'Edit Testimoni'}</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                     <input placeholder="Nama Lengkap Alumni/Anggota" value={cmsForm.name} onChange={e => setCmsForm({...cmsForm, name: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white" />
+                     <input placeholder="Peran / Kelas / Pekerjaan (cth. Alumni 2023)" value={cmsForm.role} onChange={e => setCmsForm({...cmsForm, role: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white" />
+                     <textarea placeholder="Pesan / Kutipan..." value={cmsForm.content} onChange={e => setCmsForm({...cmsForm, content: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2 h-24" />
+                     <input placeholder="URL Foto Muka (Opsional)" value={cmsForm.image_url} onChange={e => setCmsForm({...cmsForm, image_url: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2" />
+                   </div>
+                   <div className="flex justify-end gap-3">
+                     <button onClick={() => setEditingCmsId(null)} className="px-4 py-2 text-gray-400 hover:text-white">Batal</button>
+                     <button onClick={handleSaveTestimonial} className="px-4 py-2 bg-ltec-cyan text-black rounded-lg font-medium">{procId ? 'Menyimpan...' : 'Simpan'}</button>
+                   </div>
+                 </div>
+               )}
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 {testimonials.map(item => (
+                   <div key={item.id} className="p-6 bg-white/5 rounded-2xl border border-white/10 relative group">
+                     <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 shrink-0">
+                           {item.image_url && <img src={item.image_url} className="w-full h-full object-cover" />}
+                        </div>
+                        <div>
+                           <p className="font-bold text-white">{item.name}</p>
+                           <p className="text-xs text-ltec-cyan">{item.role}</p>
+                        </div>
+                     </div>
+                     <p className="text-sm text-gray-300 italic">"{item.content}"</p>
+                     
+                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                       <button onClick={() => startEditTestimonial(item)} className="p-2 bg-white/20 hover:bg-white/40 rounded backdrop-blur-sm"><Settings size={14} className="text-white"/></button>
+                       <button onClick={() => handleDeleteTestimonial(item.id)} className="p-2 bg-red-500/20 text-red-500 hover:bg-red-500/40 rounded backdrop-blur-sm"><X size={14}/></button>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             </div>
+          )}
+
         </div>
-      )}
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

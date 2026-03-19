@@ -1,60 +1,17 @@
 'use client';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useRef } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 
-const EVENTS_DATA = [
-  {
-    title: "Juara Umum LKS IT/Networking Provinsi 2024",
-    date: "Oktober 2024",
-    category: "Kompetisi",
-    img: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070&auto=format&fit=crop",
-    colSpan: "md:col-span-2",
-  },
-  {
-    title: "Kunjungan Industri & Data Center Kominfo",
-    date: "September 2024",
-    category: "Kegiatan Eksternal",
-    img: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=2034&auto=format&fit=crop",
-    colSpan: "md:col-span-1",
-  },
-  {
-    title: "Sertifikasi Profesional Mikrotik MTCNA",
-    date: "Agustus 2024",
-    category: "Ujian Sertifikasi",
-    img: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop",
-    colSpan: "md:col-span-1",
-  },
-  {
-    title: "LTEC Hackathon & Sprint Coding 48 Jam",
-    date: "Juli 2024",
-    category: "Event Internal",
-    img: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=2070&auto=format&fit=crop",
-    colSpan: "md:col-span-2",
-  },
-  {
-    title: "Instalasi Fiber Optik Lingkungan Sekolah",
-    date: "Juni 2024",
-    category: "Praktik Lapangan",
-    img: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=2070&auto=format&fit=crop",
-    colSpan: "md:col-span-2",
-  },
-  {
-    title: "Pelatihan Kesadaran Keamanan Siber",
-    date: "Mei 2024",
-    category: "Workshop Internal",
-    img: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=2070&auto=format&fit=crop",
-    colSpan: "md:col-span-1",
-  },
-  {
-    title: "Bootcamp Calon Anggota Angkatan VI",
-    date: "Maret 2024",
-    category: "Pendidikan & Kaderisasi",
-    img: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?q=80&w=2070&auto=format&fit=crop",
-    colSpan: "md:col-span-3",
-  }
-];
 
-export default function Events() {
+export default function Events({ gallery = [] }: { gallery?: any[] }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
   return (
     <section id="galeri" className="py-32 bg-[#050505] relative z-10 border-t border-white/5">
       <div className="max-w-7xl mx-auto px-6">
@@ -73,36 +30,39 @@ export default function Events() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {EVENTS_DATA.map((event, idx) => (
+        {gallery.length === 0 ? (
+          <div className="text-center text-gray-400 min-h-[50vh] flex items-center justify-center">Belum ada album galeri.</div>
+        ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10 p-6 max-w-[1600px] mx-auto">
+          {gallery.map((event, i) => (
             <motion.div
-              key={idx}
+              key={event.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: idx * 0.1 }}
-              className={`group relative h-[400px] rounded-[2rem] overflow-hidden ${event.colSpan} cursor-pointer border border-white/10 shadow-2xl`}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: (i % 4) * 0.1 }}
+              className="group relative rounded-3xl overflow-hidden aspect-[4/5] bg-black/50 border border-white/10 hover:border-ltec-cyan/50 transition-colors"
             >
-              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-500 z-10" />
               <img 
-                src={event.img} 
+                src={event.image_url} 
                 alt={event.title}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.2s] group-hover:scale-105"
+                className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent flex flex-col justify-end p-8 z-20">
-                <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                  <div className="flex items-center gap-4 mb-3">
-                    <span className="inline-block px-3 py-1.5 rounded-full bg-ltec-cyan/20 text-ltec-cyan text-[10px] font-bold tracking-widest uppercase border border-ltec-cyan/20 backdrop-blur-md">
-                      {event.category}
-                    </span>
-                    <span className="text-gray-300 text-sm font-light tracking-wide">{event.date}</span>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-serif text-white">{event.title}</h3>
+              
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+              
+              <div className="absolute inset-0 p-8 flex flex-col justify-end translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                <div className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-medium text-ltec-cyan mb-4 w-max">
+                  {event.category}
                 </div>
+                <h3 className="text-xl md:text-2xl font-serif text-white font-medium leading-snug">
+                  {event.title}
+                </h3>
               </div>
             </motion.div>
           ))}
         </div>
+        )}
       </div>
     </section>
   );
