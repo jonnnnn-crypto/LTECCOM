@@ -31,12 +31,10 @@ export default function AdminLogin() {
     setError('');
 
     const res = await login(email, password);
-    if (res.success) {
-      router.push('/admin/dashboard');
-    } else {
-      setError(res.error || 'Login gagal.');
+    if (res?.error) {
+      setError(res.error);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

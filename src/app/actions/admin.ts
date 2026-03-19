@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { notifyRegistration, notifyAccepted } from './whatsapp';
 
 export async function getRecruitmentStatus() {
@@ -24,6 +25,7 @@ export async function toggleRecruitment() {
 }
 
 export async function login(email: string, password: string) {
+  let isSuccess = false;
   try {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -31,15 +33,20 @@ export async function login(email: string, password: string) {
     if (error || !data.user) {
       return { success: false, error: 'Kredensial tidak valid' };
     }
-    return { success: true };
+    isSuccess = true;
   } catch (e: any) {
     return { success: false, error: 'Koneksi database gagal (cek URL/Key)' };
+  }
+
+  if (isSuccess) {
+    redirect('/admin/dashboard');
   }
 }
 
 export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  redirect('/admin');
 }
 
 export async function getSession() {
