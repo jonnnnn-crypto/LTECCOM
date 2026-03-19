@@ -68,9 +68,16 @@ export default function AdminDashboard() {
       setProfiles(await getProfiles() || []);
       setGallery(await getGallery() || []);
       setAchievements(await getAchievements() || []);
-      setDivisions(await getDivisionsInfo() || []);
       setTestimonials(await getTestimonials() || []);
       setTimeline(await getRecruitmentTimeline() || []);
+    }
+
+    const isInti = ['Ketua Umum', 'Wakil Ketua Umum', 'Sekretaris Umum', 'Bendahara Umum'].includes(sess.role);
+    const isKetuaDivisi = ['Ketua Divisi', 'Wakil Ketua Divisi'].includes(sess.role);
+    
+    // Everyone in Inti + Divisi Leaders can configure Quotas
+    if (isInti || isKetuaDivisi) {
+      setDivisions(await getDivisionsInfo() || []);
     }
     setLoading(false);
   };
@@ -244,7 +251,10 @@ export default function AdminDashboard() {
   if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-ltec-cyan">Memuat Integrasi CMS...</div>;
 
   const isAdmin = session?.role === 'Ketua Umum' || session?.role === 'Wakil Ketua Umum';
+  const isInti = isAdmin || session?.role === 'Sekretaris Umum' || session?.role === 'Bendahara Umum';
   const isDivisionLeader = session?.role === 'Ketua Divisi' || session?.role === 'Wakil Ketua Divisi';
+  const canManageQuota = isInti || isDivisionLeader;
+  
   const needsProfileSetup = isDivisionLeader && (!session?.phone_number || session?.phone_number.includes('08123456789') || session?.name?.startsWith('Ketua Divisi') || session?.name?.startsWith('Wakil Ketua'));
 
   if (needsProfileSetup) {
@@ -280,7 +290,7 @@ export default function AdminDashboard() {
     { id: 'struktur', label: 'Struktur Pengurus', icon: ShieldCheck, adminOnly: true },
     { id: 'galeri', label: 'Galeri Publik', icon: ImageIcon, adminOnly: true },
     { id: 'prestasi', label: 'Prestasi', icon: Award, adminOnly: true },
-    { id: 'divisi', label: 'Divisi & Kuota', icon: Layout, adminOnly: true },
+    { id: 'divisi', label: 'Divisi & Kuota', icon: Layout, adminOnly: false, quotaAuth: true },
     { id: 'testimoni', label: 'Testimoni', icon: MessageSquare, adminOnly: true },
   ];
 
@@ -309,6 +319,7 @@ export default function AdminDashboard() {
         <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
           {TABS.map(tab => {
             if (tab.adminOnly && !isAdmin) return null;
+            if (tab.quotaAuth && !canManageQuota) return null;
             return (
               <button
                 key={tab.id}
@@ -724,7 +735,7 @@ export default function AdminDashboard() {
           )}
 
           {/* TAB: DIVISI */}
-          {activeTab === 'divisi' && isAdmin && (
+          {activeTab === 'divisi' && canManageQuota && (
              <div>
                <div className="flex justify-between items-center mb-6">
                  <div>
@@ -734,12 +745,14 @@ export default function AdminDashboard() {
                  {editingCmsId !== 'ALL' && <button onClick={() => startEditDivisions()} className="px-4 py-2 bg-ltec-cyan text-black font-semibold rounded-lg text-sm hover:opacity-80">Edit Seluruh Kuota</button>}
                  {editingCmsId === 'ALL' && <button onClick={() => { setEditingCmsId(null); loadData(); }} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm">Batal Edit</button>}
                </div>
-               
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 {divisions.map(div => {
-                   const isEditing = editingCmsId === 'ALL';
-                   return (
-                     <div key={div.id} className="p-6 bg-white/5 border border-white/10 rounded-2xl relative">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {divisions.map(div => {
+                    const isEditing = editingCmsId === 'ALL';
+                    // Divis Leaders only see their own division, Inti sees all
+                    if (!isInti && session?.division !== div.name) return null;
+                    
+                    return (
+                      <div key={div.id} className="p-6 bg-white/5 border border-white/10 rounded-2xl relative">
                        {isEditing ? (
                          <div className="space-y-3">
                            <div className="font-bold text-ltec-cyan mb-2 border-b border-ltec-cyan/30 pb-2">{div.id.toUpperCase()}</div>

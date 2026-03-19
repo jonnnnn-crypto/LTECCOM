@@ -21,6 +21,18 @@ async function verifyAnyAdmin() {
   return { authorized: true, error: null, session };
 }
 
+// SECURITY: Open Quota Admin for Core Execs & Division Leaders
+async function verifyQuotaAdmin() {
+  const session = await getSession();
+  if (!session) return { authorized: false, error: 'Unauthorized login state', session: null };
+  
+  const allowed = ['Ketua Umum', 'Wakil Ketua Umum', 'Sekretaris Umum', 'Bendahara Umum', 'Ketua Divisi', 'Wakil Ketua Divisi'];
+  if (!allowed.includes(session.role)) {
+    return { authorized: false, error: 'Akses Ditolak. Penyesuaian kuota hanya dapat dilakukan oleh Pengurus Inti atau Pimpinan Divisi.', session };
+  }
+  return { authorized: true, error: null, session };
+}
+
 // ============================================
 // GALLERIES
 // ============================================
@@ -126,10 +138,17 @@ export async function getDivisionsInfo() {
 }
 
 export async function saveDivisionInfo(id: string, payload: { name: string, quota: number, description: string }) {
-  const auth = await verifySuperAdmin();
+  const auth = await verifyQuotaAdmin();
   if (!auth.authorized) return { success: false, error: auth.error };
 
   const supabase = await createClient();
+  
+  // Scoped Security: If user is Division Leader, they can only edit their own division!
+  if (auth.session?.role === 'Ketua Divisi' || auth.session?.role === 'Wakil Ketua Divisi') {
+    if (auth.session.division !== payload.name) {
+       return { success: false, error: 'Anda hanya diizinkan untuk mengubah kuota Divisi Anda sendiri.' };
+    }
+  }
   const { error } = await supabase.from('divisions_info').update(payload).eq('id', id);
   if (error) return { success: false, error: error.message };
   
