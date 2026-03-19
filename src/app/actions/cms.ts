@@ -214,7 +214,7 @@ export async function getWebinarEvents() {
   } catch { return []; }
 }
 
-export async function saveWebinarEvent(id: string | null, payload: { title: string, description: string, event_date: string, type: string, link: string, image_url: string }) {
+export async function saveWebinarEvent(id: string | null, payload: { title: string, description: string, event_date: string, type: string, link: string, image_url: string, registration_start?: string | null, registration_end?: string | null }) {
   const auth = await verifyAnyAdmin();
   if (!auth.authorized || !auth.session) return { success: false, error: auth.error };
 

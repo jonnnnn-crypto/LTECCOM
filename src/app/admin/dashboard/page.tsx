@@ -231,7 +231,7 @@ export default function AdminDashboard() {
   };
   const startEditWebinar = (item?: any) => {
     if (item) { setEditingCmsId(item.id); setCmsForm(item); }
-    else { setEditingCmsId('NEW'); setCmsForm({ title: '', description: '', event_date: '', type: 'Webinar', link: '', image_url: '' }); }
+    else { setEditingCmsId('NEW'); setCmsForm({ title: '', description: '', event_date: '', type: 'Webinar', link: '', image_url: '', registration_start: '', registration_end: '' }); }
   };
   const startEditTimeline = (item?: any) => {
     if (item) { setEditingCmsId(item.id); setCmsForm(item); }
@@ -482,6 +482,14 @@ export default function AdminDashboard() {
                         <option value="Lainnya">Lainnya</option>
                      </select>
                      <textarea placeholder="Deskripsi Event" value={cmsForm.description} onChange={e => setCmsForm({...cmsForm, description: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2 h-24" />
+                     <div className="md:col-span-1">
+                       <label className="text-xs text-gray-500 block mb-1 tracking-wider uppercase">Waktu Buka Pendaftaran</label>
+                       <input type="datetime-local" value={cmsForm.registration_start ? cmsForm.registration_start.substring(0, 16) : ''} onChange={e => setCmsForm({...cmsForm, registration_start: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white w-full" />
+                     </div>
+                     <div className="md:col-span-1">
+                       <label className="text-xs text-gray-500 block mb-1 tracking-wider uppercase">Waktu Tutup Pendaftaran</label>
+                       <input type="datetime-local" value={cmsForm.registration_end ? cmsForm.registration_end.substring(0, 16) : ''} onChange={e => setCmsForm({...cmsForm, registration_end: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white w-full" />
+                     </div>
                      <input placeholder="URL Pendaftaran (Link Google Form)" value={cmsForm.link} onChange={e => setCmsForm({...cmsForm, link: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2" />
                      <input placeholder="URL Banner Gambar (Opsional)" value={cmsForm.image_url} onChange={e => setCmsForm({...cmsForm, image_url: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2" />
                    </div>
