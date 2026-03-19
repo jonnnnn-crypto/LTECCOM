@@ -10,7 +10,7 @@ import {
   getAchievements, saveAchievement, deleteAchievement,
   getDivisionsInfo, saveDivisionInfo,
   getTestimonials, saveTestimonial, deleteTestimonial,
-  getWebinarEvents, saveWebinarEvent, deleteWebinarEvent,
+  getWebinarEvents, saveWebinarEvent, deleteWebinarEvent, deleteAllWebinarEvents,
   getRecruitmentTimeline, saveRecruitmentTimeline, deleteRecruitmentTimeline,
   getDivisionMembers, saveDivisionMember, deleteDivisionMember
 } from '@/app/actions/cms';
@@ -188,6 +188,18 @@ export default function AdminDashboard() {
     setProcId(null);
   };
 
+  const handleDeleteAllWebinars = async () => {
+    setProcId('confirm_clear_webinars');
+  };
+
+  const executeClearWebinars = async () => {
+    setProcId('clearing_webinars');
+    const res = await deleteAllWebinarEvents();
+    if (!res?.success) alert('Gagal menghapus event: ' + (res?.error || 'Database error'));
+    await loadData();
+    setProcId(null);
+  };
+
   const handleSaveTimeline = async () => {
     setProcId('save_timeline');
     const res = await saveRecruitmentTimeline(editingCmsId === 'NEW' ? null : editingCmsId, cmsForm);
@@ -231,7 +243,7 @@ export default function AdminDashboard() {
   };
   const startEditWebinar = (item?: any) => {
     if (item) { setEditingCmsId(item.id); setCmsForm(item); }
-    else { setEditingCmsId('NEW'); setCmsForm({ title: '', description: '', event_date: '', type: 'Webinar', link: '', image_url: '', registration_start: '', registration_end: '' }); }
+    else { setEditingCmsId('NEW'); setCmsForm({ title: '', description: '', type: 'Webinar', link: '', image_url: '' }); }
   };
   const startEditTimeline = (item?: any) => {
     if (item) { setEditingCmsId(item.id); setCmsForm(item); }
@@ -475,7 +487,17 @@ export default function AdminDashboard() {
                    <h2 className="text-2xl font-serif text-white">Event & Webinar Manager</h2>
                    <p className="text-sm text-gray-400">Jadwalkan Webinar, Lomba, atau Kampus Visit. Publik dapat melihat ini.</p>
                  </div>
-                 <button onClick={() => startEditWebinar()} className="px-4 py-2 bg-emerald-500/20 text-emerald-400 font-semibold rounded-lg text-sm hover:opacity-80 border border-emerald-500/30">+ Tambah Event Baru</button>
+                 <div className="flex gap-3 flex-wrap">
+                   {webinars.length > 0 && (
+                     <button onClick={() => {
+                        if (procId === 'confirm_clear_webinars') executeClearWebinars();
+                        else handleDeleteAllWebinars();
+                     }} className="px-4 py-2 bg-red-500/20 text-red-500 font-semibold rounded-lg text-sm hover:opacity-80 border border-red-500/30 transition-colors">
+                       {procId === 'clearing_webinars' ? 'Sedang Menghapus...' : procId === 'confirm_clear_webinars' ? 'Klik Sekali Lagi (Konfirmasi)' : 'Bersihkan Semua Event'}
+                     </button>
+                   )}
+                   <button onClick={() => startEditWebinar()} className="px-4 py-2 bg-emerald-500/20 text-emerald-400 font-semibold rounded-lg text-sm hover:opacity-80 border border-emerald-500/30 transition-colors">+ Tambah Event Baru</button>
+                 </div>
                </div>
                
                {editingCmsId && (
@@ -483,21 +505,12 @@ export default function AdminDashboard() {
                    <h3 className="text-lg text-white mb-4">{editingCmsId === 'NEW' ? 'Perancangan Agenda Baru' : 'Ubah Agenda'}</h3>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                      <input placeholder="Judul Seminar / Perlombaan" value={cmsForm.title} onChange={e => setCmsForm({...cmsForm, title: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2" />
-                     <input placeholder="Tanggal (cth. 12 Agustus 2026)" value={cmsForm.event_date} onChange={e => setCmsForm({...cmsForm, event_date: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white" />
-                     <select value={cmsForm.type} onChange={e => setCmsForm({...cmsForm, type: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white">
+                     <select value={cmsForm.type} onChange={e => setCmsForm({...cmsForm, type: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2">
                         <option value="Webinar">Webinar</option>
                         <option value="Lomba">Lomba (CTF / Kompetisi)</option>
                         <option value="Lainnya">Lainnya</option>
                      </select>
                      <textarea placeholder="Deskripsi Event" value={cmsForm.description} onChange={e => setCmsForm({...cmsForm, description: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2 h-24" />
-                     <div className="md:col-span-1">
-                       <label className="text-xs text-gray-500 block mb-1 tracking-wider uppercase">Waktu Buka Pendaftaran</label>
-                       <input type="datetime-local" value={cmsForm.registration_start ? cmsForm.registration_start.substring(0, 16) : ''} onChange={e => setCmsForm({...cmsForm, registration_start: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white w-full" />
-                     </div>
-                     <div className="md:col-span-1">
-                       <label className="text-xs text-gray-500 block mb-1 tracking-wider uppercase">Waktu Tutup Pendaftaran</label>
-                       <input type="datetime-local" value={cmsForm.registration_end ? cmsForm.registration_end.substring(0, 16) : ''} onChange={e => setCmsForm({...cmsForm, registration_end: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white w-full" />
-                     </div>
                      <input placeholder="URL Pendaftaran (Link Google Form)" value={cmsForm.link} onChange={e => setCmsForm({...cmsForm, link: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2" />
                      <input placeholder="URL Banner Gambar (Opsional)" value={cmsForm.image_url} onChange={e => setCmsForm({...cmsForm, image_url: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2" />
                    </div>
@@ -514,7 +527,6 @@ export default function AdminDashboard() {
                      <div className="flex-1">
                        <div className="flex flex-wrap items-center gap-3 mb-2">
                          <span className="text-xs font-bold tracking-widest text-black bg-emerald-400 px-2 py-1 rounded">{item.type}</span>
-                         <span className="text-sm text-gray-400"><Calendar size={14} className="inline mr-1" /> {item.event_date}</span>
                        </div>
                        <h4 className="text-xl text-white font-medium mb-1">{item.title}</h4>
                        <p className="text-sm text-gray-400 mb-2 line-clamp-2">{item.description}</p>

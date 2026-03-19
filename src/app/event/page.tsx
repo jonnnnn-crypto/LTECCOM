@@ -40,9 +40,6 @@ export default async function EventPage() {
                       {event.type.toLowerCase().includes('webinar') ? <MonitorPlay size={14} className="text-emerald-400"/> : event.type.toLowerCase().includes('lomba') ? <Trophy size={14} className="text-yellow-400"/> : <Users size={14} className="text-ltec-cyan"/>}
                       {event.type}
                     </div>
-                    <div className="text-sm font-medium text-gray-400 flex items-center gap-1.5">
-                      <Calendar size={14} /> {event.event_date}
-                    </div>
                  </div>
 
                  <h3 className="text-2xl font-serif text-white mb-3 leading-tight">{event.title}</h3>
@@ -54,24 +51,11 @@ export default async function EventPage() {
                    <div className="text-xs text-gray-500">
                      Penyelenggara: <span className="text-ltec-cyan font-medium">{event.created_by}</span>
                    </div>
-                   {event.link && (() => {
-                     const now = new Date();
-                     const start = event.registration_start ? new Date(event.registration_start) : null;
-                     const end = event.registration_end ? new Date(event.registration_end) : null;
-                     
-                     if (start && now < start) {
-                         const timeString = start.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
-                         return <div className="p-3 bg-white/5 text-gray-400 rounded-xl text-[11px] font-semibold border border-white/5 whitespace-nowrap">Buka: {timeString}</div>;
-                     } else if (end && now > end) {
-                         return <div className="p-3 bg-red-500/10 text-red-400 rounded-xl text-[11px] font-semibold border border-red-500/20 whitespace-nowrap">Telah Ditutup</div>;
-                     } else {
-                         return (
-                           <a href={event.link} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-xl transition-colors border border-transparent hover:border-emerald-500/30 font-semibold text-sm flex items-center gap-2">
-                             Daftar <LinkIcon size={16} />
-                           </a>
-                         );
-                     }
-                   })()}
+                   {event.link && (
+                     <a href={event.link} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-xl transition-colors border border-transparent hover:border-emerald-500/30 font-semibold text-sm flex items-center gap-2">
+                       Daftar <LinkIcon size={16} />
+                     </a>
+                   )}
                  </div>
                </div>
              ))}
