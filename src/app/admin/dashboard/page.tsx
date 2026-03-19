@@ -370,7 +370,7 @@ export default function AdminDashboard() {
               <div className="flex justify-between items-center mb-6">
                  <div>
                    <h2 className="text-2xl font-serif text-white">Database Pelamar {isAdmin ? 'Global' : 'Divisi'}</h2>
-                   <span className="text-gray-400 text-sm">{applicants.length} Total Berkas</span>
+                   <span className="text-gray-400 text-sm">{applicants.filter(app => isAdmin || app.division_choice === session?.division).length} Total Berkas</span>
                  </div>
                  {isAdmin && (
                    <button 
@@ -404,15 +404,16 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {applicants.map(app => (
+                    {applicants.filter(app => isAdmin || app.division_choice === session?.division).map(app => (
                       <tr key={app.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
                         <td className="p-4 text-white font-medium">{app.full_name}</td>
                         <td className="p-4 text-gray-400 text-sm">{app.phone_number}<br/>{app.email}</td>
-                        <td className="p-4 text-ltec-cyan text-sm">{app.division_choice}</td>
+                        {!isAdmin && <td className="p-4 text-ltec-cyan text-sm">{app.division_choice}</td>}
+                        {isAdmin && <td className="p-4 text-ltec-cyan text-sm">{app.division_choice}</td>}
                         <td className="p-4 text-gray-400 text-sm max-w-xs truncate">{app.motivation}</td>
                         <td className="p-4">
                           <div className="flex flex-col items-center justify-center gap-2">
-                            {app.status === 'pending' && (
+                            {(app.status === 'pending' || !app.status) && (
                               <div className="flex justify-center gap-2">
                                 <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'interview')} className="px-4 py-2 bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/40 rounded-lg text-xs font-semibold border border-indigo-500/30 transition shadow-lg flex items-center gap-1"><Check size={14}/> LOLOS BERKAS</button>
                                 <button disabled={!!procId} onClick={() => processRegistration(app.id, app.phone_number, app.full_name, app.division_choice, 'rejected')} className="px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500/40 rounded-lg text-xs font-semibold border border-red-500/30 transition shadow-lg flex items-center gap-1"><X size={14}/> TOLAK</button>
@@ -452,7 +453,7 @@ export default function AdminDashboard() {
                         </td>
                       </tr>
                     ))}
-                    {applicants.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-gray-500 italic">Belum ada data pelamar.</td></tr>}
+                    {applicants.filter(app => isAdmin || app.division_choice === session?.division).length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-500 italic">Belum ada data pelamar.</td></tr>}
                   </tbody>
                 </table>
               </div>

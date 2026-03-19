@@ -91,7 +91,8 @@ export async function submitRegistration(formData: FormData) {
       email,
       phone_number: phone,
       division_choice: division,
-      motivation
+      motivation,
+      status: 'pending'
     });
 
     if (error) return { success: false, error: error.message };
