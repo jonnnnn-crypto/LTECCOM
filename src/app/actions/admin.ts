@@ -64,7 +64,8 @@ export async function getSession() {
       email: profile.email,
       role: profile.role,
       division: profile.division,
-      name: profile.full_name
+      name: profile.full_name,
+      phone_number: profile.phone_number
     };
   } catch (e) {
     return null;
