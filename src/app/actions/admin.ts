@@ -133,6 +133,50 @@ export async function updateRegistrationStatus(id: string, phone: string, name: 
     }
 
     revalidatePath('/admin/dashboard');
+    revalidatePath('/admin/dashboard');
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+// === NEW PROFILES MANAGEMENT FUNCTIONS ===
+
+export async function getProfiles() {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.from('profiles').select('*').order('role', { ascending: true });
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function updateOwnProfile(updates: any) {
+  try {
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return { success: false, error: 'Not authenticated' };
+
+    const { error } = await supabase.from('profiles').update(updates).eq('id', session.user.id);
+    if (error) throw error;
+    
+    revalidatePath('/admin/dashboard');
+    revalidatePath('/divisi');
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+export async function updateProfileAdmin(id: string, updates: any) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from('profiles').update(updates).eq('id', id);
+    if (error) throw error;
+    
+    revalidatePath('/admin/dashboard');
+    revalidatePath('/divisi');
     return { success: true };
   } catch (e: any) {
     return { success: false, error: e.message };

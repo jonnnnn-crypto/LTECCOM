@@ -1,4 +1,5 @@
 'use client';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 const ADVISORS = [
@@ -7,50 +8,36 @@ const ADVISORS = [
   { role: 'Pembina', name: 'Ahmad Subhan S.Kom', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop' }
 ];
 
-const CORE_BOARD = [
-  { role: 'Ketua Umum', name: 'Naura Ghifari Azhar', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop' },
-  { role: 'Wakil Ketua Umum', name: 'Ridho Julianto', img: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200&auto=format&fit=crop' },
-  { role: 'Sekretaris Umum', name: 'Fadil Erlangga', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop' },
-  { role: 'Bendahara Umum', name: 'Zalfa Altacera', img: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=200&auto=format&fit=crop' }
-];
+export default function Structure({ profiles = [] }: { profiles?: any[] }) {
 
-const DIVISIONS = [
-  { 
-    name: 'Phoenix (Cyber Security)', 
-    members: [
-      { role: 'Ketua Divisi', name: 'Riski Permana', img: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=200&auto=format&fit=crop' },
-      { role: 'Wakil Ketua', name: 'Farel Sapero', img: 'https://images.unsplash.com/photo-1463453091185-61582044d556?q=80&w=200&auto=format&fit=crop' }
-    ]
-  },
-  { 
-    name: 'SysAdmin (ITNSA)', 
-    members: [
-      { role: 'Ketua Divisi', name: 'Ridho Fitrawan', img: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=200&auto=format&fit=crop' },
-      { role: 'Wakil Ketua', name: 'Fadil Erlangga', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop' } // Using same image internally for placeholder
-    ]
-  },
-  { 
-    name: 'Coding & Software Dev', 
-    members: [
-      { role: 'Ketua Divisi', name: 'Rico Iqbal Jeryan', img: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&auto=format&fit=crop' },
-      { role: 'Wakil Ketua', name: 'Daniel Alvino Akbar', img: 'https://images.unsplash.com/photo-1530268729831-4b0b9e170218?q=80&w=200&auto=format&fit=crop' }
-    ]
-  },
-  { 
-    name: 'Information (Network Cabling)', 
-    members: [
-      { role: 'Ketua Divisi', name: 'Teguh Anton Susanto', img: 'https://images.unsplash.com/photo-1521119989659-a83eee488004?q=80&w=200&auto=format&fit=crop' }
-    ]
-  },
-  { 
-    name: 'Cloud Computing', 
-    members: [
-      { role: 'Ketua Divisi', name: 'Rahil Hidayat', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop' }
-    ]
-  }
-];
+  const CORE_BOARD = useMemo(() => {
+    const roles = ['Ketua Umum', 'Wakil Ketua Umum', 'Sekretaris Umum', 'Bendahara Umum'];
+    return roles.map(r => {
+      const p = profiles.find(x => x.role === r);
+      return {
+        role: r,
+        name: p?.full_name || 'Menunggu Penugasan',
+        img: p?.photo_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop'
+      };
+    });
+  }, [profiles]);
 
-export default function Structure() {
+  const DIVISIONS = useMemo(() => {
+    const divNames = ['Phoenix', 'SysAdmin', 'Software Dev', 'Network Cabling', 'Cloud Computing'];
+    return divNames.map(dName => {
+      const ketua = profiles.find(x => x.division === dName && x.role === 'Ketua Divisi');
+      const wakil = profiles.find(x => x.division === dName && x.role === 'Wakil Ketua Divisi');
+      
+      const members = [];
+      if (ketua) members.push({ role: 'Ketua Divisi', name: ketua.full_name, img: ketua.photo_url || 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&auto=format&fit=crop' });
+      if (wakil) members.push({ role: 'Wakil Ketua Divisi', name: wakil.full_name, img: wakil.photo_url || 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=200&auto=format&fit=crop' });
+      
+      return {
+        name: dName,
+        members
+      };
+    });
+  }, [profiles]);
   return (
     <section id="structure" className="py-32 bg-[#050505] relative z-10 overflow-hidden border-t border-white/5">
       {/* Background glow */}

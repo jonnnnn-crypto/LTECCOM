@@ -1,12 +1,16 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, X } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Menu, X, Terminal, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getSession } from '@/app/actions/admin';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [adminSession, setAdminSession] = useState(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,6 +18,14 @@ export default function Navbar() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      const session = await getSession();
+      setAdminSession(session);
+    };
+    fetchSession();
   }, []);
 
   const navItems = [
@@ -24,6 +36,16 @@ export default function Navbar() {
     { label: 'Galeri', href: '/galeri' },
     { label: 'Prestasi', href: '/prestasi' },
     { label: 'Kontak', href: '/kontak' },
+  ];
+
+  const navLinks = [
+    { name: 'Tentang', href: '/tentang' },
+    { name: 'Program', href: '/program' },
+    { name: 'Divisi', href: '/divisi' },
+    { name: 'Perjalanan', href: '/perjalanan' },
+    { name: 'Galeri', href: '/galeri' },
+    { name: 'Prestasi', href: '/prestasi' },
+    { name: 'Kontak', href: '/kontak' },
   ];
 
   return (
@@ -38,29 +60,37 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-4">
             {navItems.map((item) => (
-              <Link 
-                key={item.label} 
+              <Link
+                key={item.label}
                 href={item.href}
                 className="text-sm font-medium text-gray-300 hover:text-white transition-colors tracking-wide"
               >
                 {item.label}
               </Link>
             ))}
+            {adminSession && (
+              <Link
+                href="/admin/dashboard"
+                className="px-4 py-2 text-sm font-medium transition-colors text-ltec-cyan hover:text-white flex items-center gap-2"
+              >
+                <Shield size={16} /> Admin Panel
+              </Link>
+            )}
           </div>
 
           {/* CTA & Mobile Toggle */}
           <div className="flex items-center gap-4">
-            <Link 
+            <Link
               href="/rekrutmen"
               className="hidden md:flex items-center justify-center px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-medium border border-white/20 transition-all hover:border-ltec-cyan shadow-lg"
             >
               Gabung Komunitas
             </Link>
-            
-            <button 
-              className="md:hidden text-white p-2"
+
+            <button
+              className="lg:hidden text-white p-2"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -71,25 +101,38 @@ export default function Navbar() {
         {/* Mobile Nav */}
         <AnimatePresence>
           {isMobileMenuOpen && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="absolute top-full left-6 right-6 mt-4 p-6 glass-panel rounded-3xl md:hidden flex flex-col gap-4 border border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl"
+              className="absolute top-full left-6 right-6 mt-4 p-6 glass-panel rounded-3xl lg:hidden flex flex-col gap-4 border border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl"
             >
-              {navItems.map((item) => (
-                <Link 
-                  key={item.label} 
-                  href={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-lg font-medium text-gray-300 hover:text-white transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              <div className="flex flex-col gap-4">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`text-lg font-medium px-4 py-2 rounded-xl transition-all
+                          ${pathname === link.href ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+
+                {adminSession && (
+                  <Link
+                    href="/admin/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-lg font-medium px-4 py-2 rounded-xl transition-all text-ltec-cyan hover:bg-white/5 border border-ltec-cyan/30 mt-4 flex items-center gap-3"
+                  >
+                    <Shield size={20} /> Dashboard Admin
+                  </Link>
+                )}
+              </div>
               <div className="w-full h-[1px] bg-white/10 my-2" />
-              <Link 
+              <Link
                 href="/rekrutmen"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="text-center px-5 py-3 rounded-xl bg-ltec-blue text-white text-base font-medium transition-all hover:bg-blue-600"
