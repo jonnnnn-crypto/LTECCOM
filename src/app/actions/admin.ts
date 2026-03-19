@@ -189,6 +189,19 @@ export async function deleteRegistration(id: string) {
   }
 }
 
+export async function deleteAllRegistrations() {
+  try {
+    const supabase = await createClient();
+    // A delete without an .eq() requires .neq('id', 'uuid_placeholder') or similar in Supabase JS v2
+    // But we can delete everything by fetching IDs and dropping, or better:
+    await supabase.from('registrations').delete().neq('status', 'placeholder_for_all');
+    revalidatePath('/admin/dashboard');
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
 // === NEW PROFILES MANAGEMENT FUNCTIONS ===
 
 export async function getProfiles() {

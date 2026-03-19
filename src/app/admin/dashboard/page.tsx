@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   getSession, getRecruitmentStatus, toggleRecruitment, logout, 
-  getRegistrations, updateRegistrationStatus, deleteRegistration, getProfiles, updateOwnProfile, updateProfileAdmin 
+  getRegistrations, updateRegistrationStatus, deleteRegistration, deleteAllRegistrations, getProfiles, updateOwnProfile, updateProfileAdmin 
 } from '@/app/actions/admin';
 import { 
   getGallery, saveGalleryItem, deleteGalleryItem,
@@ -368,8 +368,27 @@ export default function AdminDashboard() {
           {activeTab === 'pelamar' && (
             <div>
               <div className="flex justify-between items-center mb-6">
-                 <h2 className="text-2xl font-serif text-white">Database Pelamar {isAdmin ? 'Global' : 'Divisi'}</h2>
-                 <span className="text-gray-400 text-sm">{applicants.length} Total</span>
+                 <div>
+                   <h2 className="text-2xl font-serif text-white">Database Pelamar {isAdmin ? 'Global' : 'Divisi'}</h2>
+                   <span className="text-gray-400 text-sm">{applicants.length} Total Berkas</span>
+                 </div>
+                 {isAdmin && (
+                   <button 
+                     onClick={async () => {
+                       if (procId === 'confirm_clear_all') {
+                         setProcId('clearing_all');
+                         await deleteAllRegistrations();
+                         await loadData();
+                         setProcId(null);
+                       } else {
+                         setProcId('confirm_clear_all');
+                       }
+                     }} 
+                     className="px-4 py-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 text-sm rounded-lg border border-red-500/20 transition flex items-center gap-2 font-medium"
+                   >
+                     {procId === 'clearing_all' ? 'Dibersihkan...' : procId === 'confirm_clear_all' ? 'Yakin Hapus Semua?' : 'Bersihkan Semua Data'}
+                   </button>
+                 )}
               </div>
               
               <div className="overflow-x-auto">
@@ -413,7 +432,22 @@ export default function AdminDashboard() {
                                 <span className="text-red-500 px-3 py-1 bg-red-500/10 rounded-full border border-red-500/20">DITOLAK</span>
                               </div>
                             )}
-                            <button onClick={async () => { if(confirm('Hapus permanen pelamar ini?')) { setProcId(`del_${app.id}`); await deleteRegistration(app.id); await loadData(); setProcId(null); } }} disabled={procId === `del_${app.id}`} className="text-xs text-red-500/50 hover:text-red-500 border border-red-500/20 rounded px-3 py-1 mt-1 transition w-fit">{procId === `del_${app.id}` ? 'Menghapus...' : 'Hapus Data'}</button>
+                            <button 
+                              onClick={async () => { 
+                                if(procId === `confirm_${app.id}`) { 
+                                  setProcId(`del_${app.id}`); 
+                                  await deleteRegistration(app.id); 
+                                  await loadData(); 
+                                  setProcId(null); 
+                                } else { 
+                                  setProcId(`confirm_${app.id}`); 
+                                } 
+                              }} 
+                              disabled={procId === `del_${app.id}`} 
+                              className="text-[11px] text-red-500/50 hover:text-red-500 border border-red-500/20 rounded px-3 py-1 mt-2 transition w-fit font-medium tracking-wide uppercase"
+                            >
+                              {procId === `del_${app.id}` ? 'MENGHAPUS...' : procId === `confirm_${app.id}` ? 'KLIK LAGI (YAKIN?)' : 'HAPUS DATA'}
+                            </button>
                           </div>
                         </td>
                       </tr>
