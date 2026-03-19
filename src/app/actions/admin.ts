@@ -192,9 +192,14 @@ export async function deleteRegistration(id: string) {
 export async function deleteAllRegistrations() {
   try {
     const supabase = await createClient();
-    // A delete without an .eq() requires .neq('id', 'uuid_placeholder') or similar in Supabase JS v2
-    // But we can delete everything by fetching IDs and dropping, or better:
-    await supabase.from('registrations').delete().neq('status', 'placeholder_for_all');
+    // Fetch all IDs to bypass PostgREST bulk delete safety restrictions cleanly.
+    const { data: allIds } = await supabase.from('registrations').select('id');
+    
+    if (allIds && allIds.length > 0) {
+      const idList = allIds.map(x => x.id);
+      await supabase.from('registrations').delete().in('id', idList);
+    }
+
     revalidatePath('/admin/dashboard');
     return { success: true };
   } catch (e: any) {
