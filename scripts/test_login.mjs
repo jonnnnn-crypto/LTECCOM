@@ -25,7 +25,25 @@ async function test() {
   if (profileErr) {
     console.error("Profile Error:", profileErr);
   } else {
-    console.log("Profile Found:", profileData);
+    console.log("Profile Found:", profileData.full_name);
+    
+    // Test UPDATE
+    console.log("Testing UPDATE profiles...");
+    const { error: updErr } = await supabase.from('profiles').update({ phone_number: '08123456789' }).eq('id', authData.user.id);
+    if (updErr) {
+      console.error("Update Error:", updErr);
+    } else {
+      console.log("Update SUCCESS! So RLS is not blocking profiles.");
+    }
+    
+    // Test UPDATE gallery
+    console.log("Testing INSERT gallery...");
+    const { error: galErr } = await supabase.from('gallery').insert({ title: 'Test', category: 'Test', image_url: 'test' });
+    if (galErr) {
+      console.error("Gallery Insert Error:", galErr);
+    } else {
+      console.log("Gallery Insert SUCCESS!");
+    }
   }
 }
 

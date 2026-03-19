@@ -37,6 +37,7 @@ export default function AdminDashboard() {
   // Form States
   const [procId, setProcId] = useState<string | null>(null);
   const [waInput, setWaInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
   
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [profileForm, setProfileForm] = useState<any>({});
@@ -73,7 +74,6 @@ export default function AdminDashboard() {
   const handleLogout = async () => { await logout(); router.push('/admin'); };
 
   const handleToggleRecruitment = async () => {
-    if (!confirm('Ubah status pendaftaran?')) return;
     setProcId('toggle_rec');
     const n = await toggleRecruitment();
     setIsOpen(n);
@@ -81,7 +81,6 @@ export default function AdminDashboard() {
   };
 
   const processRegistration = async (id: string, phone: string, name: string, div: string, status: 'accepted' | 'rejected') => {
-    if (!confirm(`Tandai pelamar sebagai ${status}?`)) return;
     setProcId(id);
     const res = await updateRegistrationStatus(id, phone, name, div, status);
     if (!res?.success) alert('Gagal memproses pelamar.');
@@ -89,14 +88,14 @@ export default function AdminDashboard() {
     setProcId(null);
   };
 
-  const handleUpdateWA = async (e: React.FormEvent) => {
+  const handleUpdateProfileSetup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!waInput) return;
-    setProcId('wa_update');
-    const res = await updateOwnProfile({ phone_number: waInput });
+    if (!waInput || !nameInput) return;
+    setProcId('profile_setup');
+    const res = await updateOwnProfile({ phone_number: waInput, full_name: nameInput });
     if (res.success) {
-      setSession({ ...session, phone_number: waInput });
-      alert("Nomor WA berhasil disimpan!");
+      setSession({ ...session, phone_number: waInput, name: nameInput });
+      alert("Profil berhasil disahkan!");
     } else alert(`Gagal: ${res.error}`);
     setProcId(null);
   };
@@ -120,7 +119,6 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteGallery = async (id: string) => {
-    if (!confirm('Hapus item galeri ini?')) return;
     setProcId(id);
     await deleteGalleryItem(id);
     await loadData();
@@ -135,7 +133,6 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteAchievement = async (id: string) => {
-    if (!confirm('Hapus rincian prestasi ini?')) return;
     setProcId(id);
     await deleteAchievement(id);
     await loadData();
@@ -146,7 +143,7 @@ export default function AdminDashboard() {
     setProcId(`div-${id}`);
     const divTarget = cmsForm[id];
     const res = await saveDivisionInfo(id, { name: divTarget.name, quota: parseInt(divTarget.quota), description: divTarget.description });
-    if (res.success) { setEditingCmsId(null); await loadData(); } else alert(`Gagal: ${res.error}`);
+    if (res.success) { await loadData(); } else alert(`Gagal: ${res.error}`);
     setProcId(null);
   };
 
@@ -158,7 +155,6 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteTestimonial = async (id: string) => {
-    if (!confirm('Hapus testimoni ini?')) return;
     setProcId(id);
     await deleteTestimonial(id);
     await loadData();
@@ -173,7 +169,6 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteWebinar = async (id: string) => {
-    if (!confirm('Hapus Event/Webinar ini?')) return;
     setProcId(id);
     await deleteWebinarEvent(id);
     await loadData();
@@ -206,21 +201,27 @@ export default function AdminDashboard() {
 
   if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-ltec-cyan">Memuat Integrasi CMS...</div>;
 
-  const isAdmin = session?.role === 'Ketua Umum' || session?.role === 'Wakil Ketua Umum';
   const isDivisionLeader = session?.role === 'Ketua Divisi' || session?.role === 'Wakil Ketua Divisi';
-  const needsWAUpdate = isDivisionLeader && (!session?.phone_number || session?.phone_number.includes('08123456789'));
+  const needsProfileSetup = isDivisionLeader && (!session?.phone_number || session?.phone_number.includes('08123456789') || session?.name?.startsWith('Ketua Divisi') || session?.name?.startsWith('Wakil Ketua'));
 
-  if (needsWAUpdate) {
+  if (needsProfileSetup) {
     return (
       <main className="min-h-screen bg-[#050505] p-6 pt-32 relative overflow-hidden flex items-center justify-center">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-red-500/10 blur-[120px] pointer-events-none rounded-full" />
         <div className="glass-panel max-w-lg w-full p-10 rounded-[2.5rem] border border-red-500/20 text-center relative z-10 box-glow-red">
           <AlertTriangle size={48} className="mx-auto text-red-400 mb-6" />
-          <h2 className="text-2xl font-serif text-white mb-2">Konfigurasi Wajib WhatsApp</h2>
-          <p className="text-gray-400 text-sm mb-8">Sebagai Kepala Divisi, pengisian Nomor WhatsApp aktif diwajibkan untuk menjamin jalannya layanan notifikasi API otomastis kita terhadap pendaftar baru.</p>
-          <form onSubmit={handleUpdateWA} className="space-y-4">
-            <input type="tel" required value={waInput} onChange={e => setWaInput(e.target.value)} placeholder="08123xxxx" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-red-400 outline-none" />
-            <button type="submit" disabled={procId === 'wa_update'} className="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl disabled:opacity-50 transition">{procId ? '...' : 'Sahkan Nomor'}</button>
+          <h2 className="text-2xl font-serif text-white mb-2">Lengkapi Data Diri Pimpinan</h2>
+          <p className="text-gray-400 text-sm mb-8">Sebagai Pimpinan Divisi, lengkapi Nama Asli Anda dan Nomor WhatsApp untuk menjamin validitas kepengurusan dan fungsi layanan Notifikasi Broadcaster.</p>
+          <form onSubmit={handleUpdateProfileSetup} className="space-y-5">
+            <div className="text-left">
+              <label className="text-xs text-gray-400 mb-1 ml-1 block">Nama Lengkap Anda</label>
+              <input type="text" required value={nameInput} onChange={e => setNameInput(e.target.value)} placeholder="Contoh: Budi Santoso" className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-red-400 outline-none" />
+            </div>
+            <div className="text-left">
+              <label className="text-xs text-gray-400 mb-1 ml-1 block">Nomor WhatsApp Aktif</label>
+              <input type="tel" required value={waInput} onChange={e => setWaInput(e.target.value)} placeholder="0812..." className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-red-400 outline-none" />
+            </div>
+            <button type="submit" disabled={procId === 'profile_setup'} className="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl disabled:opacity-50 transition font-medium">{procId ? 'Menyimpan...' : 'Sahkan Profil Saya'}</button>
           </form>
           <button onClick={handleLogout} className="mt-6 text-gray-500 hover:text-white text-sm">Kembali / Logout</button>
         </div>
