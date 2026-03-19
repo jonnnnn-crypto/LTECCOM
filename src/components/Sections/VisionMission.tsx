@@ -6,9 +6,9 @@ export default function VisionMission() {
   return (
     <section className="py-24 bg-[#050505] relative z-10">
       <div className="max-w-7xl mx-auto px-6">
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mb-24 items-center">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -21,19 +21,19 @@ export default function VisionMission() {
               <h2 className="text-4xl md:text-5xl font-serif text-white">Visi Kami</h2>
             </div>
             <p className="text-gray-300 text-lg md:text-xl font-light leading-relaxed border-l-2 border-ltec-cyan pl-6 italic">
-              "Menjadi kiblat komunitas teknologi pendidikan vokasi di Indonesia yang mencetak inovator, ahli keamanan siber, dan insinyur perangkat lunak berstandar global pada tahun 2030."
+              "Menjadi kiblat komunitas teknologi pendidikan vokasi di Indonesia yang mencetak inovator, ahli keamanan siber, dan insinyur perangkat lunak berstandar global pada tahun 2026."
             </p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
             className="w-full h-80 rounded-[2rem] overflow-hidden relative border border-white/10"
           >
-            <img 
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop" 
+            <img
+              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop"
               alt="Kolaborasi Visi"
               className="w-full h-full object-cover filter grayscale hover:grayscale-0 transition-all duration-700 hover:scale-105"
             />

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { submitRegistration } from '@/app/actions/admin';
 
 const UI_CONFIG: any = {
-  phoenix: { icon: Shield, color: 'from-ltec-cyan to-blue-500' },
+  cybersecurity: { icon: Shield, color: 'from-ltec-cyan to-blue-500' },
   sysadmin: { icon: Server, color: 'from-purple-500 to-pink-500' },
   software: { icon: Code, color: 'from-emerald-400 to-teal-500' },
   network: { icon: Network, color: 'from-orange-400 to-red-500' },
@@ -26,7 +26,7 @@ export default function DivisionRecruitment({ isOpen = false, divisions = [] }: 
     formData.append('division', selectedDivision || '');
 
     const res = await submitRegistration(formData);
-    
+
     if (res?.success) {
       setSuccessMsg('Pendaftaran Berhasil! Silakan cek WhatsApp Anda untuk info lebih lanjut.');
       setTimeout(() => setSelectedDivision(null), 3000);
@@ -56,7 +56,7 @@ export default function DivisionRecruitment({ isOpen = false, divisions = [] }: 
           {divisions.map((div, i) => {
             const cfg = UI_CONFIG[div.id] || { icon: Shield, color: 'from-gray-500 to-gray-700' };
             const Icon = cfg.icon;
-            
+
             return (
               <motion.div
                 key={div.id}
@@ -67,7 +67,7 @@ export default function DivisionRecruitment({ isOpen = false, divisions = [] }: 
                 className="glass-panel p-8 md:p-10 rounded-3xl border border-white/10 hover:border-ltec-cyan/30 transition-colors flex flex-col justify-between group overflow-hidden relative"
               >
                 <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${cfg.color} blur-[60px] opacity-10 group-hover:opacity-20 transition-opacity`} />
-                
+
                 <div>
                   <div className="flex items-center gap-5 mb-6">
                     <div className={`p-4 rounded-full bg-white/5 border border-white/10 ${cfg.color.split(' ')[0].replace('from-', 'text-')}`}>
@@ -82,7 +82,7 @@ export default function DivisionRecruitment({ isOpen = false, divisions = [] }: 
                 </div>
 
                 <div className="pt-6 border-t border-white/10 mt-auto">
-                  <button 
+                  <button
                     onClick={() => isOpen && setSelectedDivision(div.name)}
                     disabled={!isOpen || div.quota <= 0}
                     className={`w-full py-4 rounded-xl font-medium tracking-wide transition-all flex items-center justify-center gap-2 relative overflow-hidden group/btn disabled:opacity-50 disabled:cursor-not-allowed border
@@ -102,19 +102,19 @@ export default function DivisionRecruitment({ isOpen = false, divisions = [] }: 
       {/* Registration Modal Overlay */}
       <AnimatePresence>
         {selectedDivision && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
               className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 max-w-md w-full relative shadow-2xl"
             >
-              <button 
+              <button
                 onClick={() => setSelectedDivision(null)}
                 className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors"
               >
@@ -137,8 +137,8 @@ export default function DivisionRecruitment({ isOpen = false, divisions = [] }: 
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div>
                     <label className="text-sm text-gray-400 block mb-2">Nama Lengkap</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       name="fullName"
                       required
                       placeholder="Masukkan nama lengkap"
@@ -147,8 +147,8 @@ export default function DivisionRecruitment({ isOpen = false, divisions = [] }: 
                   </div>
                   <div>
                     <label className="text-sm text-gray-400 block mb-2">Nomor WhatsApp Valid</label>
-                    <input 
-                      type="tel" 
+                    <input
+                      type="tel"
                       name="phoneNumber"
                       required
                       placeholder="08123456789"
@@ -157,8 +157,8 @@ export default function DivisionRecruitment({ isOpen = false, divisions = [] }: 
                   </div>
                   <div>
                     <label className="text-sm text-gray-400 block mb-2">Email</label>
-                    <input 
-                      type="email" 
+                    <input
+                      type="email"
                       name="email"
                       required
                       placeholder="email@sekolah.com"
@@ -166,17 +166,17 @@ export default function DivisionRecruitment({ isOpen = false, divisions = [] }: 
                     />
                   </div>
                   <div>
-                     <label className="text-sm text-gray-400 block mb-2">Motivasi Singkat</label>
-                     <textarea 
-                        name="motivation"
-                        required
-                        placeholder="Mengapa Anda ingin masuk divisi ini?"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-ltec-cyan transition-colors h-24"
-                     />
+                    <label className="text-sm text-gray-400 block mb-2">Motivasi Singkat</label>
+                    <textarea
+                      name="motivation"
+                      required
+                      placeholder="Mengapa Anda ingin masuk divisi ini?"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-ltec-cyan transition-colors h-24"
+                    />
                   </div>
 
                   <div className="pt-4">
-                    <button 
+                    <button
                       type="submit"
                       disabled={loading}
                       className="w-full bg-ltec-cyan text-black font-semibold py-4 rounded-xl hover:bg-ltec-cyan/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"

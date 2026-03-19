@@ -2,34 +2,7 @@
 import { motion } from 'framer-motion';
 import { Calendar, Users, FileText, CheckCircle } from 'lucide-react';
 
-const RECRUITMENT_STEPS = [
-  {
-    icon: FileText,
-    title: "Pendaftaran Online",
-    date: "10 - 20 Juli 2026",
-    desc: "Isi formulir pendaftaran melalui tautan resmi kami. Pastikan Anda telah membaca semua persyaratan."
-  },
-  {
-    icon: Users,
-    title: "Seleksi Berkas & Wawancara",
-    date: "22 - 25 Juli 2026",
-    desc: "Tim instruktur akan meninjau motivasi dan minat Anda terhadap divisi yang dipilih."
-  },
-  {
-    icon: Calendar,
-    title: "Bootcamp Calon Anggota",
-    date: "1 - 5 Agustus 2026",
-    desc: "Pengenalan dasar-dasar teknologi, logika pemrograman, dan etos kerja komunitas."
-  },
-  {
-    icon: CheckCircle,
-    title: "Pengumuman Resmi",
-    date: "10 Agustus 2026",
-    desc: "Selamat bergabung di keluarga besar Liwa Tech Excellent Community!"
-  }
-];
-
-export default function Recruitment({ isOpen = false }: { isOpen?: boolean }) {
+export default function Recruitment({ isOpen = false, timeline = [] }: { isOpen?: boolean, timeline?: any[] }) {
   return (
     <section id="rekrutmen" className="py-32 bg-[#050505] relative z-10 border-t border-white/5 overflow-hidden">
       {/* Background glow */}
@@ -49,11 +22,17 @@ export default function Recruitment({ isOpen = false }: { isOpen?: boolean }) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {RECRUITMENT_STEPS.map((step, i) => {
-            const Icon = step.icon;
+          {timeline.length === 0 && (
+            <div className="text-gray-500 w-full col-span-1 md:col-span-2 lg:col-span-4 text-center py-10">
+              Konfigurasi Timeline Rekrutmen belum tersedia dari Admin Panel.
+            </div>
+          )}
+          {timeline.map((step, i) => {
+            const icons = [FileText, Users, Calendar, CheckCircle];
+            const Icon = icons[i % icons.length];
             return (
               <motion.div 
-                key={i}
+                key={step.id}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
@@ -66,8 +45,8 @@ export default function Recruitment({ isOpen = false }: { isOpen?: boolean }) {
                   <Icon size={24} />
                 </div>
                 <h3 className="text-xl font-serif text-white mb-2">{step.title}</h3>
-                <span className="text-ltec-cyan text-sm font-medium tracking-wide block mb-4">{step.date}</span>
-                <p className="text-gray-400 font-light text-sm leading-relaxed">{step.desc}</p>
+                <span className="text-ltec-cyan text-sm font-medium tracking-wide block mb-4">{step.date_range}</span>
+                <p className="text-gray-400 font-light text-sm leading-relaxed">{step.description}</p>
               </motion.div>
             )
           })}

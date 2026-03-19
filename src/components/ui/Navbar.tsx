@@ -40,15 +40,19 @@ export default function Navbar() {
   ];
 
   const navLinks = [
-    { name: 'Tentang', href: '/tentang' },
+    { name: 'Beranda', href: '/' },
+    { name: 'Divisi', href: '/divisi' },
     { name: 'Program', href: '/program' },
     { name: 'Event', href: '/event' },
-    { name: 'Divisi', href: '/divisi' },
+    { name: 'Anggota', href: '/anggota' },
+    { name: 'Rekrutmen', href: '/rekrutmen' },
     { name: 'Perjalanan', href: '/perjalanan' },
     { name: 'Galeri', href: '/galeri' },
     { name: 'Prestasi', href: '/prestasi' },
     { name: 'Kontak', href: '/kontak' },
   ];
+
+  if (pathname?.startsWith('/admin')) return null;
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${isScrolled ? 'py-4' : 'py-8'}`}>

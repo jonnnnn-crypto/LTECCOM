@@ -2,13 +2,19 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 
-const ADVISORS = [
-  { role: 'Pelindung', name: 'Tri Yunita, S.Ag.M.Pd.I', img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop' },
-  { role: 'Penanggung Jawab', name: 'Latip Ihpa S.Kom', img: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop' },
-  { role: 'Pembina', name: 'Ahmad Subhan S.Kom', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop' }
-];
-
 export default function Structure({ profiles = [] }: { profiles?: any[] }) {
+
+  const ADVISORS = useMemo(() => {
+    const roles = ['Pelindung', 'Penanggung Jawab', 'Pembina'];
+    return roles.map(r => {
+      const p = profiles.find(x => x.role === r);
+      return {
+        role: r,
+        name: p?.full_name || (r === 'Pelindung' ? 'Tri Yunita, S.Ag.M.Pd.I' : r === 'Penanggung Jawab' ? 'Latip Ihpa S.Kom' : 'Ahmad Subhan S.Kom'),
+        img: p?.photo_url || (r === 'Pelindung' ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop' : 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop')
+      };
+    });
+  }, [profiles]);
 
   const CORE_BOARD = useMemo(() => {
     const roles = ['Ketua Umum', 'Wakil Ketua Umum', 'Sekretaris Umum', 'Bendahara Umum'];

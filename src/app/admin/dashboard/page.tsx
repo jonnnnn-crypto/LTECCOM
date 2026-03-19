@@ -10,11 +10,13 @@ import {
   getAchievements, saveAchievement, deleteAchievement,
   getDivisionsInfo, saveDivisionInfo,
   getTestimonials, saveTestimonial, deleteTestimonial,
-  getWebinarEvents, saveWebinarEvent, deleteWebinarEvent
+  getWebinarEvents, saveWebinarEvent, deleteWebinarEvent,
+  getRecruitmentTimeline, saveRecruitmentTimeline, deleteRecruitmentTimeline,
+  getDivisionMembers, saveDivisionMember, deleteDivisionMember
 } from '@/app/actions/cms';
 import { 
   Power, Settings, Users, LogOut, ShieldCheck, Check, X,
-  AlertTriangle, Save, Image as ImageIcon, Award, Layout, MessageSquare, Menu, Calendar
+  AlertTriangle, Save, Image as ImageIcon, Award, Layout, MessageSquare, Menu, Calendar, Clock, Contact
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -22,7 +24,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pelamar' | 'struktur' | 'galeri' | 'prestasi' | 'divisi' | 'testimoni' | 'event'>('pelamar');
+  const [activeTab, setActiveTab] = useState<'pelamar' | 'struktur' | 'galeri' | 'prestasi' | 'divisi' | 'testimoni' | 'event' | 'timeline' | 'anggota'>('pelamar');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Data States
@@ -33,6 +35,8 @@ export default function AdminDashboard() {
   const [divisions, setDivisions] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [webinars, setWebinars] = useState<any[]>([]);
+  const [timeline, setTimeline] = useState<any[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
 
   // Form States
   const [procId, setProcId] = useState<string | null>(null);
@@ -57,6 +61,7 @@ export default function AdminDashboard() {
     
     // Loaded by ALL Admins
     setWebinars(await getWebinarEvents() || []);
+    setMembers(await getDivisionMembers() || []);
 
     // Loaded by Ketum / Waketum
     if (sess.role === 'Ketua Umum' || sess.role === 'Wakil Ketua Umum') {
@@ -65,6 +70,7 @@ export default function AdminDashboard() {
       setAchievements(await getAchievements() || []);
       setDivisions(await getDivisionsInfo() || []);
       setTestimonials(await getTestimonials() || []);
+      setTimeline(await getRecruitmentTimeline() || []);
     }
     setLoading(false);
   };
@@ -175,6 +181,34 @@ export default function AdminDashboard() {
     setProcId(null);
   };
 
+  const handleSaveTimeline = async () => {
+    setProcId('save_timeline');
+    const res = await saveRecruitmentTimeline(editingCmsId === 'NEW' ? null : editingCmsId, cmsForm);
+    if (res.success) { setEditingCmsId(null); await loadData(); } else alert(`Gagal: ${res.error}`);
+    setProcId(null);
+  };
+
+  const handleDeleteTimeline = async (id: string) => {
+    setProcId(id);
+    await deleteRecruitmentTimeline(id);
+    await loadData();
+    setProcId(null);
+  };
+
+  const handleSaveMember = async () => {
+    setProcId('save_member');
+    const res = await saveDivisionMember(editingCmsId === 'NEW' ? null : editingCmsId, cmsForm);
+    if (res.success) { setEditingCmsId(null); await loadData(); } else alert(`Gagal: ${res.error}`);
+    setProcId(null);
+  };
+
+  const handleDeleteMember = async (id: string) => {
+    setProcId(id);
+    await deleteDivisionMember(id);
+    await loadData();
+    setProcId(null);
+  };
+
   // Start edit helpers
   const startEditGallery = (item?: any) => {
     if (item) { setEditingCmsId(item.id); setCmsForm(item); }
@@ -191,6 +225,14 @@ export default function AdminDashboard() {
   const startEditWebinar = (item?: any) => {
     if (item) { setEditingCmsId(item.id); setCmsForm(item); }
     else { setEditingCmsId('NEW'); setCmsForm({ title: '', description: '', event_date: '', type: 'Webinar', link: '', image_url: '' }); }
+  };
+  const startEditTimeline = (item?: any) => {
+    if (item) { setEditingCmsId(item.id); setCmsForm(item); }
+    else { setEditingCmsId('NEW'); setCmsForm({ step_number: 1, title: '', date_range: '', description: '' }); }
+  };
+  const startEditMember = (item?: any) => {
+    if (item) { setEditingCmsId(item.id); setCmsForm(item); }
+    else { setEditingCmsId('NEW'); setCmsForm({ name: '', role: 'Anggota', batch_year: new Date().getFullYear().toString(), photo_url: '', division: session?.role === 'Ketua Umum' || session?.role === 'Wakil Ketua Umum' ? '' : session?.division }); }
   };
   const startEditDivisions = () => {
     const defaultForms: any = {};
@@ -232,7 +274,9 @@ export default function AdminDashboard() {
 
   const TABS = [
     { id: 'pelamar', label: 'Pelamar Divisi', icon: Users, adminOnly: false },
+    { id: 'anggota', label: 'Anggota Divisi', icon: Contact, adminOnly: false },
     { id: 'event', label: 'Event & Webinar', icon: Calendar, adminOnly: false },
+    { id: 'timeline', label: 'Timeline Rekrutmen', icon: Clock, adminOnly: true },
     { id: 'struktur', label: 'Struktur Pengurus', icon: ShieldCheck, adminOnly: true },
     { id: 'galeri', label: 'Galeri Publik', icon: ImageIcon, adminOnly: true },
     { id: 'prestasi', label: 'Prestasi', icon: Award, adminOnly: true },
@@ -409,6 +453,139 @@ export default function AdminDashboard() {
                    </div>
                  ))}
                  {webinars.length === 0 && <p className="text-gray-500 italic py-10 text-center border border-white/5 rounded-2xl border-dashed">Belum ada jadwal Event maupun Webinar yang dirancang.</p>}
+               </div>
+             </div>
+          )}
+
+          {/* TAB: TIMELINE REKRUTMEN */}
+          {activeTab === 'timeline' && isAdmin && (
+             <div>
+               <div className="flex justify-between items-center mb-6">
+                 <div>
+                   <h2 className="text-2xl font-serif text-white">Timeline Rekrutmen</h2>
+                   <p className="text-sm text-gray-400">Tahapan dan jadwal seleksi rekrutmen yang ditampilkan secara publik.</p>
+                 </div>
+                 <button onClick={() => startEditTimeline()} className="px-4 py-2 bg-indigo-500/20 text-indigo-400 font-semibold rounded-lg text-sm hover:opacity-80 border border-indigo-500/30">+ Tambah Tahapan</button>
+               </div>
+               
+               {editingCmsId && (
+                 <div className="bg-white/5 p-6 rounded-2xl border border-indigo-500/30 mb-8 max-w-2xl">
+                   <h3 className="text-lg text-white mb-4">{editingCmsId === 'NEW' ? 'Tahapan Baru' : 'Ubah Tahapan'}</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                     <div>
+                       <label className="text-xs text-gray-500 block mb-1">Nomor Urutan (1-10)</label>
+                       <input type="number" placeholder="1" value={cmsForm.step_number} onChange={e => setCmsForm({...cmsForm, step_number: parseInt(e.target.value)})} className="bg-black border border-white/10 p-3 rounded-lg text-white w-full" />
+                     </div>
+                     <div>
+                       <label className="text-xs text-gray-500 block mb-1">Judul Tahapan</label>
+                       <input placeholder="Pendaftaran Online" value={cmsForm.title} onChange={e => setCmsForm({...cmsForm, title: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white w-full" />
+                     </div>
+                     <div>
+                       <label className="text-xs text-gray-500 block mb-1">Rentang Tanggal</label>
+                       <input placeholder="10 - 20 Juli 2026" value={cmsForm.date_range} onChange={e => setCmsForm({...cmsForm, date_range: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white w-full md:col-span-2" />
+                     </div>
+                     <textarea placeholder="Deskripsi tahapan..." value={cmsForm.description} onChange={e => setCmsForm({...cmsForm, description: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2 h-24" />
+                   </div>
+                   <div className="flex justify-end gap-3">
+                     <button onClick={() => setEditingCmsId(null)} className="px-4 py-2 text-gray-400 hover:text-white">Batal</button>
+                     <button onClick={handleSaveTimeline} className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-medium">{procId ? 'Menyimpan...' : 'Simpan'}</button>
+                   </div>
+                 </div>
+               )}
+
+               <div className="space-y-4">
+                 {timeline.map(item => (
+                   <div key={item.id} className="p-5 bg-white/5 rounded-2xl border border-white/10 flex flex-col md:flex-row items-start md:items-center gap-4 hover:border-indigo-500/20 transition-colors">
+                     <div className="w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center font-bold text-indigo-400 border border-indigo-500/30 text-xl font-serif shrink-0">{item.step_number}</div>
+                     <div className="flex-1">
+                       <h4 className="text-lg text-white font-medium mb-1">{item.title}</h4>
+                       <span className="text-sm font-semibold tracking-widest text-ltec-cyan mb-2 block">{item.date_range}</span>
+                       <p className="text-sm text-gray-400 line-clamp-2">{item.description}</p>
+                     </div>
+                     <div className="flex gap-2 w-full md:w-auto mt-4 md:mt-0">
+                       <button onClick={() => startEditTimeline(item)} className="p-3 bg-white/10 hover:bg-white/20 rounded-xl flex-1 md:flex-none text-center grid place-items-center"><Settings size={18}/></button>
+                       <button onClick={() => handleDeleteTimeline(item.id)} className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500/30 rounded-xl flex-1 md:flex-none text-center grid place-items-center"><X size={18}/></button>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             </div>
+          )}
+
+          {/* TAB: ANGGOTA DIVISI */}
+          {activeTab === 'anggota' && (
+             <div>
+               <div className="flex justify-between items-center mb-6">
+                 <div>
+                   <h2 className="text-2xl font-serif text-white">Database Anggota Divisi</h2>
+                   <p className="text-sm text-gray-400">Data registri alumni dan member aktif {isAdmin ? 'Semua Divisi' : `Divisi ${session?.division || ''}`}.</p>
+                 </div>
+                 <button onClick={() => startEditMember()} className="px-4 py-2 bg-cyan-500/20 text-cyan-400 font-semibold rounded-lg text-sm hover:opacity-80 border border-cyan-500/30">+ Tambah Anggota</button>
+               </div>
+               
+               {editingCmsId && (
+                 <div className="bg-white/5 p-6 rounded-2xl border border-cyan-500/30 mb-8 max-w-2xl">
+                   <h3 className="text-lg text-white mb-4">{editingCmsId === 'NEW' ? 'Input Anggota Baru' : 'Edit Anggota'}</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                     <input placeholder="Nama Lengkap" value={cmsForm.name} onChange={e => setCmsForm({...cmsForm, name: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white" />
+                     <select value={cmsForm.role} onChange={e => setCmsForm({...cmsForm, role: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white">
+                        <option value="Anggota">Anggota</option>
+                        <option value="Ketua Divisi">Ketua Divisi</option>
+                        <option value="Wakil Ketua Divisi">Wakil Ketua Divisi</option>
+                     </select>
+                     <input placeholder="Tahun Angkatan (Misal: 2024)" value={cmsForm.batch_year} onChange={e => setCmsForm({...cmsForm, batch_year: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white" />
+                     
+                     {isAdmin ? (
+                       <select value={cmsForm.division} onChange={e => setCmsForm({...cmsForm, division: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white">
+                          <option value="">-- Pilih Divisi --</option>
+                          {divisions.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+                       </select>
+                     ) : (
+                       <input disabled value={session?.division || ''} className="bg-black/50 border border-white/10 p-3 rounded-lg text-gray-500" />
+                     )}
+                     
+                     <input placeholder="URL Foto Profile (Opsional)" value={cmsForm.photo_url} onChange={e => setCmsForm({...cmsForm, photo_url: e.target.value})} className="bg-black border border-white/10 p-3 rounded-lg text-white md:col-span-2" />
+                   </div>
+                   <div className="flex justify-end gap-3">
+                     <button onClick={() => setEditingCmsId(null)} className="px-4 py-2 text-gray-400 hover:text-white">Batal</button>
+                     <button onClick={handleSaveMember} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-black rounded-lg font-medium">{procId ? 'Menyimpan...' : 'Simpan'}</button>
+                   </div>
+                 </div>
+               )}
+
+               <div className="overflow-x-auto">
+                 <table className="w-full text-left min-w-[700px]">
+                   <thead>
+                     <tr className="border-b border-white/10 text-gray-500 text-sm">
+                       <th className="p-4">Biodata</th>
+                       <th className="p-4">Angkatan</th>
+                       <th className="p-4">Divisi & Peran</th>
+                       <th className="p-4 text-right">Opsi</th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                     {members.filter(m => isAdmin || m.division === session?.division).map(item => (
+                       <tr key={item.id} className="border-b border-white/5 hover:bg-white/5">
+                         <td className="p-4 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden">
+                               {item.photo_url && <img src={item.photo_url} className="w-full h-full object-cover" />}
+                            </div>
+                            <span className="font-medium text-white">{item.name}</span>
+                         </td>
+                         <td className="p-4 text-ltec-cyan tracking-widest text-sm">{item.batch_year}</td>
+                         <td className="p-4">
+                            <p className="text-white text-sm">{item.division}</p>
+                            <p className="text-gray-400 text-xs">{item.role}</p>
+                         </td>
+                         <td className="p-4 text-right">
+                           <button onClick={() => startEditMember(item)} className="p-2 bg-white/10 hover:bg-white/20 rounded mr-2"><Settings size={14}/></button>
+                           <button onClick={() => handleDeleteMember(item.id)} className="p-2 bg-red-500/10 text-red-500 hover:bg-red-500/30 rounded"><X size={14}/></button>
+                         </td>
+                       </tr>
+                     ))}
+                     {members.filter(m => isAdmin || m.division === session?.division).length === 0 && <tr><td colSpan={4} className="p-6 text-center text-gray-500 italic">Belum ada anggota yang didaftarkan.</td></tr>}
+                   </tbody>
+                 </table>
                </div>
              </div>
           )}
